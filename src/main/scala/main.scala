@@ -8,6 +8,7 @@ def main(): Unit = {
   val renderingHelper = RenderingHelper(window)
   while (!window.shouldClose()) do {
     renderingHelper.clear()
+    renderingHelper.drawQuadrilateral()
     window.swapBuffers()
     window.pollEvents()
   }

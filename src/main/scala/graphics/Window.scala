@@ -1,8 +1,34 @@
 package graphics
 
-import org.lwjgl.glfw.*
-import org.lwjgl.glfw.GLFW.*
-import org.lwjgl.system.*
+import org.lwjgl.glfw.GLFW.{
+  GLFW_FALSE,
+  GLFW_KEY_ESCAPE,
+  GLFW_RELEASE,
+  GLFW_RESIZABLE,
+  GLFW_VISIBLE,
+  glfwCreateWindow,
+  glfwDefaultWindowHints,
+  glfwDestroyWindow,
+  glfwGetPrimaryMonitor,
+  glfwGetVideoMode,
+  glfwGetWindowSize,
+  glfwInit,
+  glfwMakeContextCurrent,
+  glfwPollEvents,
+  glfwSetErrorCallback,
+  glfwSetKeyCallback,
+  glfwSetWindowPos,
+  glfwSetWindowShouldClose,
+  glfwShowWindow,
+  glfwSwapBuffers,
+  glfwSwapInterval,
+  glfwTerminate,
+  glfwWindowHint,
+  glfwWindowShouldClose,
+}
+import org.lwjgl.glfw.{Callbacks, GLFWErrorCallback}
+import org.lwjgl.system
+import org.lwjgl.system.{MemoryStack, MemoryUtil}
 
 /**
  * The window class handles most GLFW-related tasks
