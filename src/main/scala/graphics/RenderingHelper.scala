@@ -33,9 +33,9 @@ import org.lwjgl.opengl.GL20.{
 }
 import org.lwjgl.opengl.GL30.{glBindVertexArray, glGenVertexArrays}
 import org.lwjgl.system.MemoryUtil
-import graphics.Utils
 import graphics.Utils.glCheck
-import org.joml.Matrix4f
+import org.joml.{Matrix4f, Vector2f, Vector3f}
+import org.lwjgl.opengl.GL13.GL_MULTISAMPLE
 
 /**
  * RenderingHelper handles most low-level OpenGL code
@@ -70,6 +70,7 @@ class RenderingHelper(val window: Window) {
     glCheck { glBlendFunc(GL_SRC_ALPHA, GL_SRC_COLOR) }
     glCheck { glEnable(GL_DEPTH_TEST) }
     glCheck { glDepthFunc(GL_LEQUAL) }
+    glCheck { glEnable(GL_MULTISAMPLE) }
 
     // Set clear color to black
     glCheck { glClearColor(0f, 0f, 0f, 0f) }
@@ -97,7 +98,7 @@ class RenderingHelper(val window: Window) {
     (vaoHandle, vboHandle)
   }
 
-  def drawQuadrilateral(xPos: Float, yPos: Float, zPos: Float): Unit = {
+  def drawQuadrilateral(position: Vector3f, direction: (Float, Float)): Unit = {
     // Bind correct VAO and shader program
     glCheck { quadrilateralShaderProgram.bind() }
     glCheck { glBindVertexArray(quadrilateralVaoHandle) }
@@ -105,18 +106,16 @@ class RenderingHelper(val window: Window) {
 
     // Construct MVP matrix
     val mvpMatrix = new Matrix4f()
-    val frustumSize = 0.6f
-    mvpMatrix.setFrustum(
-      -frustumSize,
-      frustumSize,
-      -frustumSize,
-      frustumSize,
-      1f,
+    val frustumSize = 1f
+    mvpMatrix.setPerspective(
+      math.Pi.toFloat / 3f,
+      window.getAspectRatio,
+      0.5f,
       Float.PositiveInfinity,
     )
-    // mvpMatrix.setOrtho(-a, a, -a, a, 1f, Float.PositiveInfinity)
-    // mvpMatrix.setPerspective((math.Pi / 2d).toFloat, 1, 1f, Float.PositiveInfinity)
-    mvpMatrix.translate(xPos, yPos, zPos)
+    mvpMatrix.rotateX(direction(1))
+    mvpMatrix.rotateY(direction(0))
+    mvpMatrix.translate(position)
 
     // Transfer matrix into array
     val mvpMatrixArray = Array.fill[Float](16)(0)

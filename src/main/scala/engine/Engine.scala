@@ -26,8 +26,16 @@ class Engine(val desiredTps: Int, val desiredFps: Int, val gameInterface: GameIn
     private var currentTps: Int = 0
 
     private def runContinuously() = {
+      var tickCounter = 0
+      var tpsTimer = System.currentTimeMillis()
       while Engine.this.running do {
         callback()
+        tickCounter += 1
+        if (System.currentTimeMillis() - tpsTimer >= 1000) {
+          currentTps = tickCounter
+          tpsTimer = System.currentTimeMillis()
+          tickCounter = 0
+        }
       }
     }
 

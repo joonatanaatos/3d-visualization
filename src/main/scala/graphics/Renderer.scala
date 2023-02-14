@@ -1,17 +1,24 @@
 package graphics
 
 import logic.World
+import org.lwjgl.opengl.GL11.glViewport
 
 class Renderer(val world: World, val window: Window) {
   private val renderingHelper = RenderingHelper(window)
 
   def render() = {
-    val wallPos = world.stage.wallPos
-    val xPos = wallPos(0) - world.player.xPos
-    val yPos = wallPos(1) - world.player.yPos
-    val zPos = -(wallPos(2) - world.player.zPos)
+    updateViewport()
+
+    val wallPos = world.stage.getWallPos
+    wallPos.sub(world.player.getPosition)
 
     renderingHelper.clear()
-    renderingHelper.drawQuadrilateral(xPos, yPos, zPos)
+    renderingHelper.drawQuadrilateral(wallPos, world.player.getDirection)
+  }
+
+  private def updateViewport() = {
+    if (window.wasResized()) {
+      glViewport(0, 0, window.width, window.height)
+    }
   }
 }

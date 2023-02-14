@@ -1,53 +1,57 @@
 package logic
 
-import org.lwjgl.glfw.{GLFW, GLFWKeyCallbackI}
+import org.joml.{Vector2f, Vector3f}
 import org.lwjgl.glfw.GLFW.{
-  GLFW_KEY_W,
-  GLFW_KEY_S,
   GLFW_KEY_A,
   GLFW_KEY_D,
-  GLFW_KEY_UP,
   GLFW_KEY_DOWN,
   GLFW_KEY_LEFT,
   GLFW_KEY_RIGHT,
+  GLFW_KEY_S,
+  GLFW_KEY_UP,
+  GLFW_KEY_W,
   GLFW_PRESS,
   GLFW_RELEASE,
 }
+
 import scala.collection.mutable.Set
 
-class Player(var xPos: Float, var yPos: Float, var zPos: Float) {
+class Player(xPos: Float, yPos: Float, zPos: Float) extends KeyListener, CursorListener {
+  private val position = Vector3f(xPos, yPos, zPos)
+  private var direction = (0f, 0f)
+
   private var pressedKeys: Set[Int] = Set()
-  private val speed = 0.04f
+  private val movementSpeed = 0.04f
+  private val rotationSpeed = 0.0008f
 
   def tick(): Unit = {
-    val (dx, dy, dz) = normalizedVelocity()
-    xPos += dx * speed
-    yPos += dy * speed
-    zPos += dz * speed
+    val velocity = normalizedVelocity()
+    position.add(velocity.mul(movementSpeed))
   }
 
-  private def normalizedVelocity(): (Float, Float, Float) = {
-    var xVel = 0
-    var yVel = 0
-    var zVel = 0
+  private def normalizedVelocity(): Vector3f = {
+    val velocity = Vector3f().zero()
     if pressedKeys.contains(GLFW_KEY_UP) || pressedKeys.contains(GLFW_KEY_W) then {
-      zVel += 1
+      velocity.z -= 1
     }
     if pressedKeys.contains(GLFW_KEY_DOWN) || pressedKeys.contains(GLFW_KEY_S) then {
-      zVel -= 1
+      velocity.z += 1
     }
     if pressedKeys.contains(GLFW_KEY_RIGHT) || pressedKeys.contains(GLFW_KEY_D) then {
-      xVel += 1
+      velocity.x += 1
     }
     if pressedKeys.contains(GLFW_KEY_LEFT) || pressedKeys.contains(GLFW_KEY_A) then {
-      xVel -= 1
+      velocity.x -= 1
     }
-
-    val length = math.sqrt(xVel * xVel + yVel * yVel + zVel * zVel).toFloat
-    if length == 0 then (0f, 0f, 0f) else (xVel / length, yVel / length, zVel / length)
+    velocity.rotateY(-direction(0))
+    velocity.normalize()
+    if velocity.isFinite then velocity else Vector3f().zero()
   }
 
-  val onKeyInput: GLFWKeyCallbackI = (window, key, scancode, action, mods) => {
+  def getPosition: Vector3f = Vector3f(position)
+  def getDirection: (Float, Float) = direction
+
+  override def onKeyPress(key: Int, action: Int): Unit = {
     action match {
       case GLFW_PRESS => {
         pressedKeys += key
@@ -57,5 +61,14 @@ class Player(var xPos: Float, var yPos: Float, var zPos: Float) {
       }
       case _ =>
     }
+  }
+
+  override def onCursorMove(difference: (Float, Float)): Unit = {
+    val xDir = direction(0) + difference(0) * rotationSpeed
+    val yDir = direction(1) + difference(1) * rotationSpeed
+    direction = (
+      xDir % (2f * math.Pi.toFloat),
+      math.max(math.min(yDir, math.Pi.toFloat / 2f), -math.Pi.toFloat / 2f),
+    )
   }
 }

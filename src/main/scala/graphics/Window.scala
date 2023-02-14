@@ -1,32 +1,15 @@
 package graphics
 
-import org.lwjgl.glfw.GLFW.{
-  GLFW_FALSE,
-  GLFW_KEY_ESCAPE,
-  GLFW_RELEASE,
-  GLFW_RESIZABLE,
-  GLFW_VISIBLE,
-  glfwCreateWindow,
-  glfwDefaultWindowHints,
-  glfwDestroyWindow,
-  glfwGetPrimaryMonitor,
-  glfwGetVideoMode,
-  glfwGetWindowSize,
-  glfwInit,
-  glfwMakeContextCurrent,
-  glfwPollEvents,
-  glfwSetErrorCallback,
-  glfwSetKeyCallback,
-  glfwSetWindowPos,
-  glfwSetWindowShouldClose,
-  glfwShowWindow,
-  glfwSwapBuffers,
-  glfwSwapInterval,
-  glfwTerminate,
-  glfwWindowHint,
-  glfwWindowShouldClose,
+import logic.{CursorListener, EventListener, KeyListener}
+import org.lwjgl.glfw.GLFW.*
+import org.lwjgl.glfw.{
+  Callbacks,
+  GLFWCursorPosCallbackI,
+  GLFWErrorCallback,
+  GLFWFramebufferSizeCallbackI,
+  GLFWKeyCallbackI,
+  GLFWMouseButtonCallbackI,
 }
-import org.lwjgl.glfw.{Callbacks, GLFWErrorCallback, GLFWKeyCallbackI}
 import org.lwjgl.system
 import org.lwjgl.system.{MemoryStack, MemoryUtil}
 
@@ -42,9 +25,13 @@ import scala.collection.mutable.ArrayBuffer
  * @param height
  *   Window height
  */
-class Window(val title: String, val width: Int, val height: Int) extends GLFWKeyCallbackI {
+class Window(val title: String, var width: Int, var height: Int) {
   private var windowHandle: Long = -1
-  private val eventListeners: ArrayBuffer[GLFWKeyCallbackI] = ArrayBuffer()
+  private val keyListeners: ArrayBuffer[KeyListener] = ArrayBuffer()
+  private val cursorListeners: ArrayBuffer[CursorListener] = ArrayBuffer()
+
+  private var resized = false
+  private var cursorAttached = false
 
   initGLFW()
   createWindow()
@@ -62,8 +49,8 @@ class Window(val title: String, val width: Int, val height: Int) extends GLFWKey
     glfwDefaultWindowHints()
     // Keep the window hidden after creation
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE)
-    // Prevet user from resizing window
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE)
+    // Prepare buffer for MSAA
+    glfwWindowHint(GLFW_SAMPLES, 4)
   }
 
   private def createWindow(): Unit = {
@@ -73,11 +60,11 @@ class Window(val title: String, val width: Int, val height: Int) extends GLFWKey
       throw new RuntimeException("Failed to create GLFW window")
     }
 
-    // Key call back for closing the window
-    glfwSetKeyCallback(
-      windowHandle,
-      this,
-    )
+    // Setup event callbacks
+    glfwSetKeyCallback(windowHandle, keyCallback())
+    glfwSetCursorPosCallback(windowHandle, cursorPosCallback())
+    glfwSetMouseButtonCallback(windowHandle, mouseButtonCallback())
+    glfwSetFramebufferSizeCallback(windowHandle, frameBufferSizeCallback())
 
     // Center the window
     val stack = MemoryStack.stackPush()
@@ -107,19 +94,60 @@ class Window(val title: String, val width: Int, val height: Int) extends GLFWKey
     glfwShowWindow(windowHandle)
   }
 
-  override def invoke(window: Long, key: Int, scancode: Int, action: Int, mods: Int): Unit = {
-    if key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE then {
-      glfwSetWindowShouldClose(windowHandle, true)
-    }
-    eventListeners.foreach((f) => f.invoke(window, key, scancode, action, mods))
+  private def keyCallback(): GLFWKeyCallbackI = {
+    (window: Long, key: Int, scancode: Int, action: Int, mods: Int) =>
+      if key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE then {
+        glfwSetWindowShouldClose(windowHandle, true)
+      }
+      keyListeners.foreach((listener) => listener.onKeyPress(key, action))
+  }
+
+  private def cursorPosCallback(): GLFWCursorPosCallbackI = {
+    (window: Long, xPos: Double, yPos: Double) =>
+      if cursorAttached then {
+        val middlePoint = (width / 2f, height / 2f)
+        val difference = (xPos.toFloat - middlePoint(0), yPos.toFloat - middlePoint(1))
+        glfwSetCursorPos(windowHandle, middlePoint(0), middlePoint(1))
+        cursorListeners.foreach((listener) => listener.onCursorMove(difference))
+      }
+  }
+
+  private def mouseButtonCallback(): GLFWMouseButtonCallbackI = {
+    (window: Long, button: Int, action: Int, mods: Int) =>
+      if action == GLFW_PRESS && button == GLFW_MOUSE_BUTTON_1 then {
+        // Attach or detach cursor from screen
+        val cursorVisible = glfwGetInputMode(windowHandle, GLFW_CURSOR) == GLFW_CURSOR_NORMAL
+        glfwSetInputMode(
+          windowHandle,
+          GLFW_CURSOR,
+          if cursorVisible then GLFW_CURSOR_HIDDEN else GLFW_CURSOR_NORMAL,
+        )
+        if cursorVisible then {
+          glfwSetCursorPos(windowHandle, width / 2, height / 2)
+        }
+        cursorAttached = cursorVisible
+      }
+  }
+
+  private def frameBufferSizeCallback(): GLFWFramebufferSizeCallbackI = { (window, width, height) =>
+    this.width = width
+    this.height = height
+    resized = true
   }
 
   def swapBuffers() = {
     glfwSwapBuffers(windowHandle)
   }
 
-  def addEventListener(listener: GLFWKeyCallbackI) = {
-    eventListeners += listener
+  def addEventListener(listener: EventListener) = {
+    listener match {
+      case l: KeyListener => keyListeners += l
+      case _              =>
+    }
+    listener match {
+      case l: CursorListener => cursorListeners += l
+      case _                 =>
+    }
   }
 
   def shouldClose() = {
@@ -128,6 +156,17 @@ class Window(val title: String, val width: Int, val height: Int) extends GLFWKey
 
   def pollEvents() = {
     glfwPollEvents()
+  }
+
+  def wasResized() = {
+    if resized then {
+      resized = false
+      true
+    } else false
+  }
+
+  def getAspectRatio = {
+    width.toFloat / height.toFloat
   }
 
   def destroyWindow() = {
