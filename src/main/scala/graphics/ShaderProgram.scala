@@ -1,5 +1,6 @@
 package graphics
 
+import graphics.Utils.glCheck
 import org.lwjgl.opengl.GL20.{
   GL_COMPILE_STATUS,
   GL_FRAGMENT_SHADER,
@@ -16,6 +17,7 @@ import org.lwjgl.opengl.GL20.{
   glGetProgrami,
   glGetShaderInfoLog,
   glGetShaderi,
+  glGetUniformLocation,
   glLinkProgram,
   glShaderSource,
   glUseProgram,
@@ -23,8 +25,9 @@ import org.lwjgl.opengl.GL20.{
 }
 
 import java.nio.file.{Files, Paths}
+import scala.collection.immutable
 
-class ShaderProgram(val shaderName: String) {
+class ShaderProgram(val shaderName: String, val uniformNames: Array[String]) {
   private val programHandle = glCheck { glCreateProgram() }
   if programHandle == 0 then {
     throw new RuntimeException(s"Failed to create program for \"$shaderName\"")
@@ -37,6 +40,8 @@ class ShaderProgram(val shaderName: String) {
   private var fragmentShaderHandle = createShader(fragmentShaderCode, GL_FRAGMENT_SHADER)
 
   this.link()
+
+  private val uniformHandles = findUniformHandles()
 
   private def createShader(shaderCode: String, shaderType: Int): Int = {
     // Create shader
@@ -85,6 +90,14 @@ class ShaderProgram(val shaderName: String) {
         s"Failed to link shader program:\n${glGetProgramInfoLog(programHandle, 1024)}",
       )
     }
+  }
+
+  private def findUniformHandles(): immutable.Map[String, Int] = {
+    uniformNames.map((name) => (name, glCheck { glGetUniformLocation(programHandle, name) })).toMap
+  }
+
+  def uniform(name: String): Int = {
+    uniformHandles(name)
   }
 
   def bind(): Unit = {

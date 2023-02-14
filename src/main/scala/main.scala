@@ -1,14 +1,15 @@
-import graphics.Window
-import graphics.RenderingHelper
+import graphics.{Renderer, RenderingHelper, Window}
+import logic.World
 
 @main
 def main(): Unit = {
-  println("Hello world!")
   val window = new Window("3D-visualisointi", 600, 600)
-  val renderingHelper = RenderingHelper(window)
+  val world = new World(window.addEventListener)
+  val renderer = new Renderer(world, window)
+
   while (!window.shouldClose()) do {
-    renderingHelper.clear()
-    renderingHelper.drawQuadrilateral()
+    world.tick()
+    renderer.render()
     window.swapBuffers()
     window.pollEvents()
   }

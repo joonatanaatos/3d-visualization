@@ -26,9 +26,11 @@ import org.lwjgl.glfw.GLFW.{
   glfwWindowHint,
   glfwWindowShouldClose,
 }
-import org.lwjgl.glfw.{Callbacks, GLFWErrorCallback}
+import org.lwjgl.glfw.{Callbacks, GLFWErrorCallback, GLFWKeyCallbackI}
 import org.lwjgl.system
 import org.lwjgl.system.{MemoryStack, MemoryUtil}
+
+import scala.collection.mutable.ArrayBuffer
 
 /**
  * The window class handles most GLFW-related tasks
@@ -40,8 +42,9 @@ import org.lwjgl.system.{MemoryStack, MemoryUtil}
  * @param height
  *   Window height
  */
-class Window(val title: String, val width: Int, val height: Int) {
+class Window(val title: String, val width: Int, val height: Int) extends GLFWKeyCallbackI {
   private var windowHandle: Long = -1
+  private val eventListeners: ArrayBuffer[GLFWKeyCallbackI] = ArrayBuffer()
 
   initGLFW()
   createWindow()
@@ -73,11 +76,7 @@ class Window(val title: String, val width: Int, val height: Int) {
     // Key call back for closing the window
     glfwSetKeyCallback(
       windowHandle,
-      (window, key, scancode, action, mods) => {
-        if key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE then {
-          glfwSetWindowShouldClose(windowHandle, true)
-        }
-      },
+      this,
     )
 
     // Center the window
@@ -108,8 +107,19 @@ class Window(val title: String, val width: Int, val height: Int) {
     glfwShowWindow(windowHandle)
   }
 
+  override def invoke(window: Long, key: Int, scancode: Int, action: Int, mods: Int): Unit = {
+    if key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE then {
+      glfwSetWindowShouldClose(windowHandle, true)
+    }
+    eventListeners.foreach((f) => f.invoke(window, key, scancode, action, mods))
+  }
+
   def swapBuffers() = {
     glfwSwapBuffers(windowHandle)
+  }
+
+  def addEventListener(listener: GLFWKeyCallbackI) = {
+    eventListeners += listener
   }
 
   def shouldClose() = {

@@ -9,6 +9,7 @@ lazy val root = (project in file("."))
 
 val lwjglVersion = "3.3.1"
 val lwjglNatives = "natives-linux"
+val jomlVersion = "1.10.5"
 val scalatestVersion = "3.2.15"
 
 libraryDependencies ++= Seq(
@@ -20,6 +21,8 @@ libraryDependencies ++= Seq(
   "org.lwjgl" % "lwjgl" % "3.3.1" classifier lwjglNatives,
   "org.lwjgl" % "lwjgl-glfw" % "3.3.1" classifier lwjglNatives,
   "org.lwjgl" % "lwjgl-opengl" % "3.3.1" classifier lwjglNatives,
+  // Java OpenGL Math Library
+  "org.joml" % "joml" % jomlVersion,
   // Scalatest
   "org.scalatest" %% "scalatest-flatspec" % scalatestVersion % Test,
   "org.scalatest" %% "scalatest-shouldmatchers" % scalatestVersion % Test,

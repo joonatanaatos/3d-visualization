@@ -5,13 +5,16 @@ import org.lwjgl.opengl.GL11.{
   GL_BLEND,
   GL_COLOR_BUFFER_BIT,
   GL_DEPTH_BUFFER_BIT,
+  GL_DEPTH_TEST,
   GL_FLOAT,
+  GL_LEQUAL,
   GL_SRC_ALPHA,
   GL_SRC_COLOR,
   GL_TRIANGLE_STRIP,
   glBlendFunc,
   glClear,
   glClearColor,
+  glDepthFunc,
   glDrawArrays,
   glEnable,
 }
@@ -25,10 +28,14 @@ import org.lwjgl.opengl.GL15.{
 import org.lwjgl.opengl.GL20.{
   glDisableVertexAttribArray,
   glEnableVertexAttribArray,
+  glUniformMatrix4fv,
   glVertexAttribPointer,
 }
 import org.lwjgl.opengl.GL30.{glBindVertexArray, glGenVertexArrays}
 import org.lwjgl.system.MemoryUtil
+import graphics.Utils
+import graphics.Utils.glCheck
+import org.joml.Matrix4f
 
 /**
  * RenderingHelper handles most low-level OpenGL code
@@ -45,11 +52,12 @@ class RenderingHelper(val window: Window) {
     1f, 1f, 0f, // Top right
     -1f, -1f, 0f, // Bottom left
     1f, -1f, 0f, // Bottom right
-  ).map(_ / 2)
+  )
 
   this.init()
 
-  private val quadrilateralShaderProgram = new ShaderProgram("quadrilateral")
+  private val quadrilateralShaderProgram =
+    new ShaderProgram("quadrilateral", Array("mvpMatrix"))
 
   private val (quadrilateralVaoHandle, quadrilateralVboHandle) =
     this.createQuadrilateralVertices()
@@ -60,6 +68,8 @@ class RenderingHelper(val window: Window) {
 
     glCheck { glEnable(GL_BLEND) }
     glCheck { glBlendFunc(GL_SRC_ALPHA, GL_SRC_COLOR) }
+    glCheck { glEnable(GL_DEPTH_TEST) }
+    glCheck { glDepthFunc(GL_LEQUAL) }
 
     // Set clear color to black
     glCheck { glClearColor(0f, 0f, 0f, 0f) }
@@ -87,13 +97,37 @@ class RenderingHelper(val window: Window) {
     (vaoHandle, vboHandle)
   }
 
-  def drawQuadrilateral(): Unit = {
+  def drawQuadrilateral(xPos: Float, yPos: Float, zPos: Float): Unit = {
     // Bind correct VAO and shader program
     glCheck { quadrilateralShaderProgram.bind() }
     glCheck { glBindVertexArray(quadrilateralVaoHandle) }
     glCheck { glEnableVertexAttribArray(0) }
 
-    // Set uniforms here
+    // Construct MVP matrix
+    val mvpMatrix = new Matrix4f()
+    val frustumSize = 0.6f
+    mvpMatrix.setFrustum(
+      -frustumSize,
+      frustumSize,
+      -frustumSize,
+      frustumSize,
+      1f,
+      Float.PositiveInfinity,
+    )
+    // mvpMatrix.setOrtho(-a, a, -a, a, 1f, Float.PositiveInfinity)
+    // mvpMatrix.setPerspective((math.Pi / 2d).toFloat, 1, 1f, Float.PositiveInfinity)
+    mvpMatrix.translate(xPos, yPos, zPos)
+
+    // Transfer matrix into array
+    val mvpMatrixArray = Array.fill[Float](16)(0)
+    mvpMatrix.get(mvpMatrixArray)
+
+    // Set uniforms
+    glUniformMatrix4fv(
+      quadrilateralShaderProgram.uniform("mvpMatrix"),
+      false,
+      mvpMatrixArray,
+    )
 
     // Draw vertices
     glCheck { glDrawArrays(GL_TRIANGLE_STRIP, 0, 4) }
