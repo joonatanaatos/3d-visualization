@@ -8,8 +8,8 @@ import org.lwjgl.opengl.GL11.{
   GL_DEPTH_TEST,
   GL_FLOAT,
   GL_LEQUAL,
+  GL_ONE_MINUS_SRC_ALPHA,
   GL_SRC_ALPHA,
-  GL_SRC_COLOR,
   GL_TRIANGLES,
   GL_TRIANGLE_STRIP,
   glBlendFunc,
@@ -30,6 +30,7 @@ import org.lwjgl.opengl.GL15.{
 import org.lwjgl.opengl.GL20.{
   glDisableVertexAttribArray,
   glEnableVertexAttribArray,
+  glUniform4fv,
   glUniformMatrix4fv,
   glVertexAttribPointer,
 }
@@ -59,7 +60,7 @@ class RenderingHelper(val window: Window) {
   this.init()
 
   private val quadrilateralShaderProgram =
-    new ShaderProgram("quadrilateral", Array("mvpMatrix"))
+    new ShaderProgram("quadrilateral", Array("mvpMatrix", "color"))
 
   private val (quadrilateralVaoHandle, quadrilateralVboHandle) =
     this.createQuadrilateralVertices()
@@ -69,7 +70,7 @@ class RenderingHelper(val window: Window) {
     glCheck { GL.createCapabilities() }
 
     glCheck { glEnable(GL_BLEND) }
-    glCheck { glBlendFunc(GL_SRC_ALPHA, GL_SRC_COLOR) }
+    glCheck { glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA) }
     glCheck { glEnable(GL_DEPTH_TEST) }
     glCheck { glDepthFunc(GL_LEQUAL) }
     glCheck { glEnable(GL_MULTISAMPLE) }
@@ -100,7 +101,12 @@ class RenderingHelper(val window: Window) {
     (vaoHandle, vboHandle)
   }
 
-  def drawQuadrilateral(position: Vector3f, direction: (Float, Float)): Unit = {
+  def drawQuadrilateral(
+      position: Vector3f,
+      direction: (Float, Float),
+      angle: Float = 0f,
+      color: Array[Float] = Array(1f, 1f, 1f, 1f),
+  ): Unit = {
     // Bind correct VAO and shader program
     glCheck { quadrilateralShaderProgram.bind() }
     glCheck { glBindVertexArray(quadrilateralVaoHandle) }
@@ -117,17 +123,23 @@ class RenderingHelper(val window: Window) {
     mvpMatrix.rotateX(direction(1))
     mvpMatrix.rotateY(direction(0))
     mvpMatrix.translate(position)
+    mvpMatrix.rotateY(angle)
 
     // Transfer matrix into array
     val mvpMatrixArray = Array.fill[Float](16)(0)
     mvpMatrix.get(mvpMatrixArray)
 
     // Set uniforms
-    glUniformMatrix4fv(
-      quadrilateralShaderProgram.uniform("mvpMatrix"),
-      false,
-      mvpMatrixArray,
-    )
+    glCheck {
+      glUniformMatrix4fv(
+        quadrilateralShaderProgram.uniform("mvpMatrix"),
+        false,
+        mvpMatrixArray,
+      )
+    }
+    glCheck {
+      glUniform4fv(quadrilateralShaderProgram.uniform("color"), color)
+    }
 
     // Draw vertices
     glCheck { glDrawArrays(GL_TRIANGLE_STRIP, 0, 4) }
