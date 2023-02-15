@@ -102,9 +102,8 @@ class RenderingHelper(val window: Window) {
   }
 
   def drawQuadrilateral(
-      position: Vector3f,
-      direction: (Float, Float),
-      angle: Float = 0f,
+      modelMatrix: Matrix4f = Matrix4f(),
+      viewDirection: (Float, Float) = (0f, 0f),
       color: Array[Float] = Array(1f, 1f, 1f, 1f),
   ): Unit = {
     // Bind correct VAO and shader program
@@ -114,16 +113,18 @@ class RenderingHelper(val window: Window) {
 
     // Construct MVP matrix
     val mvpMatrix = new Matrix4f()
+    // Perspective
     mvpMatrix.setPerspective(
       math.Pi.toFloat / 3f,
       window.getAspectRatio,
       0.5f,
       Float.PositiveInfinity,
     )
-    mvpMatrix.rotateX(direction(1))
-    mvpMatrix.rotateY(direction(0))
-    mvpMatrix.translate(position)
-    mvpMatrix.rotateY(angle)
+    // View
+    mvpMatrix.rotateX(viewDirection(1))
+    mvpMatrix.rotateY(viewDirection(0))
+    // Model
+    mvpMatrix.mul(modelMatrix)
 
     // Transfer matrix into array
     val mvpMatrixArray = Array.fill[Float](16)(0)

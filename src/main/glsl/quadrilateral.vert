@@ -8,6 +8,6 @@ out float cameraDistance;
 
 void main() {
     vec4 result = mvpMatrix * vec4(position, 1.0f);
-    cameraDistance = length(vec3(result.x, result.y, result.z));
+    cameraDistance = result.z;
     gl_Position = result;
 }
