@@ -10,6 +10,7 @@ import org.lwjgl.opengl.GL11.{
   GL_LEQUAL,
   GL_SRC_ALPHA,
   GL_SRC_COLOR,
+  GL_TRIANGLES,
   GL_TRIANGLE_STRIP,
   glBlendFunc,
   glClear,
@@ -23,6 +24,7 @@ import org.lwjgl.opengl.GL15.{
   GL_STATIC_DRAW,
   glBindBuffer,
   glBufferData,
+  glDeleteBuffers,
   glGenBuffers,
 }
 import org.lwjgl.opengl.GL20.{
@@ -31,7 +33,7 @@ import org.lwjgl.opengl.GL20.{
   glUniformMatrix4fv,
   glVertexAttribPointer,
 }
-import org.lwjgl.opengl.GL30.{glBindVertexArray, glGenVertexArrays}
+import org.lwjgl.opengl.GL30.{glBindVertexArray, glDeleteVertexArrays, glGenVertexArrays}
 import org.lwjgl.system.MemoryUtil
 import graphics.Utils.glCheck
 import org.joml.{Matrix4f, Vector2f, Vector3f}
@@ -62,7 +64,7 @@ class RenderingHelper(val window: Window) {
   private val (quadrilateralVaoHandle, quadrilateralVboHandle) =
     this.createQuadrilateralVertices()
 
-  private def init() = {
+  private def init(): Unit = {
     // Create GL capabilities
     glCheck { GL.createCapabilities() }
 
@@ -106,7 +108,6 @@ class RenderingHelper(val window: Window) {
 
     // Construct MVP matrix
     val mvpMatrix = new Matrix4f()
-    val frustumSize = 1f
     mvpMatrix.setPerspective(
       math.Pi.toFloat / 3f,
       window.getAspectRatio,
@@ -137,8 +138,14 @@ class RenderingHelper(val window: Window) {
     glCheck { quadrilateralShaderProgram.unbind() }
   }
 
-  def clear() = {
+  def clear(): Unit = {
     // Clear the frame buffer
     glCheck { glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT) }
+  }
+
+  def destroy(): Unit = {
+    quadrilateralShaderProgram.destroy()
+    glCheck { glDeleteVertexArrays(Array(quadrilateralVaoHandle)) }
+    glCheck { glDeleteBuffers(Array(quadrilateralVboHandle)) }
   }
 }

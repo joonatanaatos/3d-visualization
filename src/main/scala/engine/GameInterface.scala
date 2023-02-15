@@ -1,7 +1,7 @@
 package engine
 
 /**
- * The GameInterface is for the Engine to invoke init(), update(), and render() calls
+ * The GameInterface is for the Engine to invoke init(), update(), render() and close() calls
  */
 trait GameInterface {
 
@@ -13,4 +13,7 @@ trait GameInterface {
 
   /** Called repetedly with an interval defined by fps */
   def render(): Unit
+
+  /** Called once upon stopping the engine */
+  def close(): Unit
 }

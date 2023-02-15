@@ -24,4 +24,9 @@ class Game extends GameInterface {
   override def update(): Unit = {
     world.tick()
   }
+
+  override def close(): Unit = {
+    renderer.destroy()
+    window.destroy()
+  }
 }

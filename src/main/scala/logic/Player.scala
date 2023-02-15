@@ -20,7 +20,7 @@ class Player(xPos: Float, yPos: Float, zPos: Float) extends KeyListener, CursorL
   private val position = Vector3f(xPos, yPos, zPos)
   private var direction = (0f, 0f)
 
-  private var pressedKeys: Set[Int] = Set()
+  private val pressedKeys: Set[Int] = Set()
   private val movementSpeed = 0.04f
   private val rotationSpeed = 0.0008f
 
@@ -53,12 +53,10 @@ class Player(xPos: Float, yPos: Float, zPos: Float) extends KeyListener, CursorL
 
   override def onKeyPress(key: Int, action: Int): Unit = {
     action match {
-      case GLFW_PRESS => {
+      case GLFW_PRESS =>
         pressedKeys += key
-      }
-      case GLFW_RELEASE => {
+      case GLFW_RELEASE =>
         pressedKeys -= key
-      }
       case _ =>
     }
   }

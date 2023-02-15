@@ -7,7 +7,7 @@ object Utils {
     val result = op
     val error = glGetError()
     if error != GL_NO_ERROR then {
-      throw new RuntimeException(s"OpenGL error: ${error}")
+      throw new RuntimeException(s"OpenGL error: $error")
     }
     result
   }

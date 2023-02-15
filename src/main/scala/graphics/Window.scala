@@ -95,25 +95,25 @@ class Window(val title: String, var width: Int, var height: Int) {
   }
 
   private def keyCallback(): GLFWKeyCallbackI = {
-    (window: Long, key: Int, scancode: Int, action: Int, mods: Int) =>
+    (_: Long, key: Int, _: Int, action: Int, _: Int) =>
       if key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE then {
         glfwSetWindowShouldClose(windowHandle, true)
       }
-      keyListeners.foreach((listener) => listener.onKeyPress(key, action))
+      keyListeners.foreach(listener => listener.onKeyPress(key, action))
   }
 
   private def cursorPosCallback(): GLFWCursorPosCallbackI = {
-    (window: Long, xPos: Double, yPos: Double) =>
+    (_: Long, xPos: Double, yPos: Double) =>
       if cursorAttached then {
         val middlePoint = (width / 2f, height / 2f)
         val difference = (xPos.toFloat - middlePoint(0), yPos.toFloat - middlePoint(1))
         glfwSetCursorPos(windowHandle, middlePoint(0), middlePoint(1))
-        cursorListeners.foreach((listener) => listener.onCursorMove(difference))
+        cursorListeners.foreach(listener => listener.onCursorMove(difference))
       }
   }
 
   private def mouseButtonCallback(): GLFWMouseButtonCallbackI = {
-    (window: Long, button: Int, action: Int, mods: Int) =>
+    (_: Long, button: Int, action: Int, _: Int) =>
       if action == GLFW_PRESS && button == GLFW_MOUSE_BUTTON_1 then {
         // Attach or detach cursor from screen
         val cursorVisible = glfwGetInputMode(windowHandle, GLFW_CURSOR) == GLFW_CURSOR_NORMAL
@@ -129,17 +129,17 @@ class Window(val title: String, var width: Int, var height: Int) {
       }
   }
 
-  private def frameBufferSizeCallback(): GLFWFramebufferSizeCallbackI = { (window, width, height) =>
+  private def frameBufferSizeCallback(): GLFWFramebufferSizeCallbackI = { (_, width, height) =>
     this.width = width
     this.height = height
     resized = true
   }
 
-  def swapBuffers() = {
+  def swapBuffers(): Unit = {
     glfwSwapBuffers(windowHandle)
   }
 
-  def addEventListener(listener: EventListener) = {
+  def addEventListener(listener: EventListener): Unit = {
     listener match {
       case l: KeyListener => keyListeners += l
       case _              =>
@@ -150,26 +150,26 @@ class Window(val title: String, var width: Int, var height: Int) {
     }
   }
 
-  def shouldClose() = {
+  def shouldClose(): Boolean = {
     glfwWindowShouldClose(windowHandle)
   }
 
-  def pollEvents() = {
+  def pollEvents(): Unit = {
     glfwPollEvents()
   }
 
-  def wasResized() = {
+  def wasResized(): Boolean = {
     if resized then {
       resized = false
       true
     } else false
   }
 
-  def getAspectRatio = {
+  def getAspectRatio: Float = {
     width.toFloat / height.toFloat
   }
 
-  def destroyWindow() = {
+  def destroy(): Unit = {
     // Destroy the window
     Callbacks.glfwFreeCallbacks(windowHandle)
     glfwDestroyWindow(windowHandle)

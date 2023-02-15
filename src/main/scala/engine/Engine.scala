@@ -25,7 +25,7 @@ class Engine(val desiredTps: Int, val desiredFps: Int, val gameInterface: GameIn
   private class Runner(val desiredTps: Int, val callback: () => Unit) extends Runnable {
     private var currentTps: Int = 0
 
-    private def runContinuously() = {
+    private def runContinuously(): Unit = {
       var tickCounter = 0
       var tpsTimer = System.currentTimeMillis()
       while Engine.this.running do {
@@ -39,7 +39,7 @@ class Engine(val desiredTps: Int, val desiredFps: Int, val gameInterface: GameIn
       }
     }
 
-    private def runAtRegularIntervals() = {
+    private def runAtRegularIntervals(): Unit = {
       var tickCounter = 0
       // Calculate how much time is between each render/update
       val nsPerTick = if desiredTps == 0 then 0 else 1000000000d / desiredTps
@@ -47,7 +47,6 @@ class Engine(val desiredTps: Int, val desiredFps: Int, val gameInterface: GameIn
       var before = System.nanoTime()
       var now = 0L
       var unprocessedTicks = 0d
-      var unprocessedFrames = 0d
 
       var tpsTimer = System.currentTimeMillis()
 
@@ -78,7 +77,7 @@ class Engine(val desiredTps: Int, val desiredFps: Int, val gameInterface: GameIn
       else runAtRegularIntervals()
     }
 
-    def getCurrentTps = currentTps
+    def getCurrentTps: Int = currentTps
   }
 
   private var running = false
@@ -98,6 +97,7 @@ class Engine(val desiredTps: Int, val desiredFps: Int, val gameInterface: GameIn
     // The renderer is run on the original thread, so that the OpenGL context doesn't change
     rendererRunner.run()
     logicThread.join()
+    gameInterface.close()
   }
 
   override def stop(): Unit = {

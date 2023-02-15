@@ -36,8 +36,8 @@ class ShaderProgram(val shaderName: String, val uniformNames: Array[String]) {
   private val vertexShaderCode = Files.readString(Paths.get(s"src/main/glsl/$shaderName.vert"))
   private val fragmentShaderCode = Files.readString(Paths.get(s"src/main/glsl/$shaderName.frag"))
 
-  private var vertexShaderHandle = createShader(vertexShaderCode, GL_VERTEX_SHADER)
-  private var fragmentShaderHandle = createShader(fragmentShaderCode, GL_FRAGMENT_SHADER)
+  private val vertexShaderHandle = createShader(vertexShaderCode, GL_VERTEX_SHADER)
+  private val fragmentShaderHandle = createShader(fragmentShaderCode, GL_FRAGMENT_SHADER)
 
   this.link()
 
@@ -93,7 +93,7 @@ class ShaderProgram(val shaderName: String, val uniformNames: Array[String]) {
   }
 
   private def findUniformHandles(): immutable.Map[String, Int] = {
-    uniformNames.map((name) => (name, glCheck { glGetUniformLocation(programHandle, name) })).toMap
+    uniformNames.map(name => (name, glCheck { glGetUniformLocation(programHandle, name) })).toMap
   }
 
   def uniform(name: String): Int = {
