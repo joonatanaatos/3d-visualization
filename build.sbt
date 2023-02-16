@@ -8,9 +8,15 @@ lazy val root = (project in file("."))
   )
 
 val lwjglVersion = "3.3.1"
-val lwjglNatives = "natives-linux"
 val jomlVersion = "1.10.5"
 val scalatestVersion = "3.2.15"
+
+val lwjglNatives = System.getProperty("os.name") match {
+  case n if n.startsWith("Linux")   => "natives-linux"
+  case n if n.startsWith("Mac")     => "natives-macos"
+  case n if n.startsWith("Windows") => "natives-windows"
+  case _                            => throw new Exception("Unknown platform!")
+}
 
 libraryDependencies ++= Seq(
   // LWJGL
@@ -18,9 +24,9 @@ libraryDependencies ++= Seq(
   "org.lwjgl" % "lwjgl-glfw" % lwjglVersion,
   "org.lwjgl" % "lwjgl-opengl" % lwjglVersion,
   // LWJGL Classifiers
-  "org.lwjgl" % "lwjgl" % "3.3.1" classifier lwjglNatives,
-  "org.lwjgl" % "lwjgl-glfw" % "3.3.1" classifier lwjglNatives,
-  "org.lwjgl" % "lwjgl-opengl" % "3.3.1" classifier lwjglNatives,
+  "org.lwjgl" % "lwjgl" % lwjglVersion classifier lwjglNatives,
+  "org.lwjgl" % "lwjgl-glfw" % lwjglVersion classifier lwjglNatives,
+  "org.lwjgl" % "lwjgl-opengl" % lwjglVersion classifier lwjglNatives,
   // Java OpenGL Math Library
   "org.joml" % "joml" % jomlVersion,
   // Scalatest

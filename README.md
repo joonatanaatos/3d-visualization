@@ -1,8 +1,7 @@
 # 3D-visualisointi
 
-## Projektin rakentaminen
+## Projektin kääntäminen ja suorittaminen
 
-- Jos käyttää jotakin x64-pohjaista linux-distroa, koodin pitäisi toimia sellaisenaan.
-- Jos käyttää Windowsia tai MacOS:ää, pitää build.sbt-tiedostossa vaihtaa `lwjglNatives`-muuttuja vastaamaan omaa käyttöjärjestelmää.
-  - Windowsille `"natives-windows"` ja MacOS:lle `"natives-macos"`.
-- MacOS:llä ohjelma pitää käynnistää `-XstartOnFirstThread`-vivulla.
+1. Asenna sbt-projektin riippuvuudet
+2. Luo uusi ajokonfiguraatio tiedostolle `src/main/scala/main.scala`
+   - Projektia on kehitetty Javan versiolla 17
