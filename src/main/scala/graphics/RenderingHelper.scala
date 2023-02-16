@@ -117,7 +117,7 @@ class RenderingHelper(val window: Window) {
     mvpMatrix.setPerspective(
       math.Pi.toFloat / 3f,
       window.getAspectRatio,
-      0.5f,
+      0.1f,
       Float.PositiveInfinity,
     )
     // View

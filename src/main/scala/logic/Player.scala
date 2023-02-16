@@ -18,15 +18,20 @@ import scala.collection.mutable.Set
 
 class Player(xPos: Float, yPos: Float, zPos: Float) extends KeyListener, CursorListener {
   private val position = Vector3f(xPos, yPos, zPos)
-  private var direction = (0f, 0f)
+  private var direction = (-math.Pi.toFloat, 0f)
 
   private val pressedKeys: Set[Int] = Set()
-  private val movementSpeed = 0.04f
+  private val movementSpeed = 0.03f
   private val rotationSpeed = 0.0008f
+  private val size = 0.2f
 
-  def tick(): Unit = {
+  def tick(world: World): Unit = {
     val velocity = normalizedVelocity()
-    position.add(velocity.mul(movementSpeed))
+    val change = velocity.mul(movementSpeed)
+    if world.stage.canBeInPosition((position.x + change.x, position.z), size) then
+      position.add(Vector3f(change.x, 0f, 0f))
+    if world.stage.canBeInPosition((position.x, position.z + change.z), size) then
+      position.add(Vector3f(0f, 0f, change.z))
   }
 
   private def normalizedVelocity(): Vector3f = {
