@@ -29,6 +29,8 @@ libraryDependencies ++= Seq(
   "org.lwjgl" % "lwjgl-opengl" % lwjglVersion classifier lwjglNatives,
   // Java OpenGL Math Library
   "org.joml" % "joml" % jomlVersion,
+  // PNG decoder
+  "org.l33tlabs.twl" % "pngdecoder" % "1.0",
   // Scalatest
   "org.scalatest" %% "scalatest-flatspec" % scalatestVersion % Test,
   "org.scalatest" %% "scalatest-shouldmatchers" % scalatestVersion % Test,

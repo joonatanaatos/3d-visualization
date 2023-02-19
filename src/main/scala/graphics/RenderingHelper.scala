@@ -30,6 +30,8 @@ import org.lwjgl.opengl.GL15.{
 import org.lwjgl.opengl.GL20.{
   glDisableVertexAttribArray,
   glEnableVertexAttribArray,
+  glGetAttribLocation,
+  glUniform1i,
   glUniform4fv,
   glUniformMatrix4fv,
   glVertexAttribPointer,
@@ -40,27 +42,36 @@ import graphics.Utils.glCheck
 import org.joml.{Matrix4f, Vector2f, Vector3f}
 import org.lwjgl.opengl.GL13.GL_MULTISAMPLE
 
+import java.nio.{ByteBuffer, ByteOrder, FloatBuffer}
+
 /**
  * RenderingHelper handles most low-level OpenGL code
  */
 class RenderingHelper(val window: Window) {
   // x, y and z coordinate
-  private val coordsPerVertex = 3
+  private val vertexPosSize = 3
+  // s and t coordinate
+  private val textureCoordSize = 2
+  // 4 bytes per float
+  private val vertexStride = (vertexPosSize + textureCoordSize) * 4
 
-  // 4 bytes per coordinate
-  private val vertexStride = coordsPerVertex * 4
+  private val vertexPosIndex = 0
+  private val textureCoordIndex = 1
 
   private val quadrilateralVertices = Array[Float](
-    -1f, 1f, 0f, // Top left
-    1f, 1f, 0f, // Top right
-    -1f, -1f, 0f, // Bottom left
-    1f, -1f, 0f, // Bottom right
+    -1f, 1f, 0f, 0f, 0f, // Top left
+    1f, 1f, 0f, 1f, 0f, // Top right
+    -1f, -1f, 0f, 0f, 1f, // Bottom left
+    1f, -1f, 0f, 1f, 1f, // Bottom right
   )
 
   this.init()
 
   private val quadrilateralShaderProgram =
     new ShaderProgram("quadrilateral", Array("mvpMatrix", "color"))
+
+  private val textureShaderProgram =
+    new ShaderProgram("texture", Array("mvpMatrix", "texture"))
 
   private val (quadrilateralVaoHandle, quadrilateralVboHandle) =
     this.createQuadrilateralVertices()
@@ -69,6 +80,7 @@ class RenderingHelper(val window: Window) {
     // Create GL capabilities
     glCheck { GL.createCapabilities() }
 
+    // Configure OpenGL
     glCheck { glEnable(GL_BLEND) }
     glCheck { glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA) }
     glCheck { glEnable(GL_DEPTH_TEST) }
@@ -93,25 +105,31 @@ class RenderingHelper(val window: Window) {
     glCheck { glBufferData(GL_ARRAY_BUFFER, vertexBuffer, GL_STATIC_DRAW) }
     glCheck { MemoryUtil.memFree(vertexBuffer) }
     // Define the structure of the data and store it in one of the attribute lists of the VAO
-    glCheck { glVertexAttribPointer(0, coordsPerVertex, GL_FLOAT, false, vertexStride, 0) }
-    // Unbind VBO and IBO
+    glCheck {
+      glVertexAttribPointer(vertexPosIndex, vertexPosSize, GL_FLOAT, false, vertexStride, 0)
+    }
+    // Set texture coordinates
+    glCheck {
+      glVertexAttribPointer(
+        textureCoordIndex,
+        textureCoordSize,
+        GL_FLOAT,
+        false,
+        vertexStride,
+        4 * vertexPosSize, // Offset
+      )
+    }
+    // Unbind VBO
     glCheck { glBindBuffer(GL_ARRAY_BUFFER, 0) }
     // Unbind VAO
     glCheck { glBindVertexArray(0) }
     (vaoHandle, vboHandle)
   }
 
-  def drawQuadrilateral(
-      modelMatrix: Matrix4f = Matrix4f(),
-      viewDirection: (Float, Float) = (0f, 0f),
-      color: Array[Float] = Array(1f, 1f, 1f, 1f),
-  ): Unit = {
-    // Bind correct VAO and shader program
-    glCheck { quadrilateralShaderProgram.bind() }
-    glCheck { glBindVertexArray(quadrilateralVaoHandle) }
-    glCheck { glEnableVertexAttribArray(0) }
-
-    // Construct MVP matrix
+  private def createMvpMatrix(
+      modelMatrix: Matrix4f,
+      viewDirection: (Float, Float),
+  ): Array[Float] = {
     val mvpMatrix = new Matrix4f()
     // Perspective
     mvpMatrix.setPerspective(
@@ -125,17 +143,31 @@ class RenderingHelper(val window: Window) {
     mvpMatrix.rotateY(viewDirection(0))
     // Model
     mvpMatrix.mul(modelMatrix)
-
     // Transfer matrix into array
     val mvpMatrixArray = Array.fill[Float](16)(0)
     mvpMatrix.get(mvpMatrixArray)
+    mvpMatrixArray
+  }
+
+  def drawQuadrilateral(
+      modelMatrix: Matrix4f = Matrix4f(),
+      viewDirection: (Float, Float) = (0f, 0f),
+      color: Array[Float] = Array(1f, 1f, 1f, 1f),
+  ): Unit = {
+    // Bind correct VAO and shader program
+    glCheck { quadrilateralShaderProgram.bind() }
+    glCheck { glBindVertexArray(quadrilateralVaoHandle) }
+    glCheck { glEnableVertexAttribArray(vertexPosIndex) }
+
+    // Create MVP matrix
+    val mvpMatrix = createMvpMatrix(modelMatrix, viewDirection)
 
     // Set uniforms
     glCheck {
       glUniformMatrix4fv(
         quadrilateralShaderProgram.uniform("mvpMatrix"),
         false,
-        mvpMatrixArray,
+        mvpMatrix,
       )
     }
     glCheck {
@@ -146,9 +178,50 @@ class RenderingHelper(val window: Window) {
     glCheck { glDrawArrays(GL_TRIANGLE_STRIP, 0, 4) }
 
     // Unbind everything and restore state
-    glCheck { glDisableVertexAttribArray(0) }
+    glCheck { glDisableVertexAttribArray(vertexPosIndex) }
     glCheck { glBindVertexArray(0) }
     glCheck { quadrilateralShaderProgram.unbind() }
+  }
+
+  def drawImage(
+      modelMatrix: Matrix4f = Matrix4f(),
+      viewDirection: (Float, Float) = (0f, 0f),
+      texture: Texture,
+  ): Unit = {
+    // Bind correct VAO and shader program
+    glCheck { textureShaderProgram.bind() }
+    glCheck { glBindVertexArray(quadrilateralVaoHandle) }
+    glCheck { glEnableVertexAttribArray(vertexPosIndex) }
+    glCheck { glEnableVertexAttribArray(textureCoordIndex) }
+
+    // Create MVP matrix
+    val mvpMatrix = createMvpMatrix(modelMatrix, viewDirection)
+
+    // Set uniforms
+    glCheck {
+      glUniformMatrix4fv(
+        textureShaderProgram.uniform("mvpMatrix"),
+        false,
+        mvpMatrix,
+      )
+    }
+    glCheck {
+      glUniform1i(textureShaderProgram.uniform("texture"), 0)
+    }
+
+    // Bind texture
+    texture.bind()
+
+    // Draw vertices
+    glCheck { glDrawArrays(GL_TRIANGLE_STRIP, 0, 4) }
+
+    // Unbind everything and restore state
+    texture.unbind()
+
+    glCheck { glDisableVertexAttribArray(vertexPosIndex) }
+    glCheck { glDisableVertexAttribArray(textureCoordIndex) }
+    glCheck { glBindVertexArray(0) }
+    glCheck { textureShaderProgram.unbind() }
   }
 
   def clear(): Unit = {

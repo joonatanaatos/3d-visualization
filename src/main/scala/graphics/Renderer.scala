@@ -23,6 +23,8 @@ class Renderer(val world: World, val window: Window) {
   private def floorShapeMatrix(width: Float, depth: Float) =
     Matrix4f().scale(width, 1f, depth).translate(1f, 0f, 1f).rotateX(math.Pi.toFloat / 2f)
 
+  private val wallTexture = new Texture("/wall.png")
+
   def render(): Unit = {
     updateViewport()
     updateCameraPosition()
@@ -57,7 +59,7 @@ class Renderer(val world: World, val window: Window) {
       if direction == "horizontal" then Vector3f(1f, 0f, 0f) else Vector3f(0f, 0f, 1f)
     wallPos.add(wallAlignment)
     // Calculate wall angle
-    val angle = if direction == "vertical" then math.Pi.toFloat / 2f else 0f
+    val angle = if direction == "vertical" then -math.Pi.toFloat / 2f else 0f
 
     // 1. Scale, 2. Rotate, 3. Translate
     val modelMatrix = Matrix4f()
@@ -65,9 +67,7 @@ class Renderer(val world: World, val window: Window) {
     modelMatrix.rotateY(angle)
     modelMatrix.mul(wallShapeMatrix)
 
-    val color = Array(0.8f, 0f, 0.7f, 1f)
-
-    renderingHelper.drawQuadrilateral(modelMatrix, cameraDirection, color)
+    renderingHelper.drawImage(modelMatrix, cameraDirection, wallTexture)
   }
 
   private def drawFloor(width: Int, depth: Int): Unit = {
@@ -78,7 +78,7 @@ class Renderer(val world: World, val window: Window) {
     modelMatrix.translate(floorPos)
     modelMatrix.mul(floorShapeMatrix(width.toFloat, depth.toFloat))
 
-    val color = Array(0.8f, 0.7f, 1f, 1f)
+    val color = Array(0.9f, 0.9f, 0.9f, 1f)
 
     renderingHelper.drawQuadrilateral(modelMatrix, cameraDirection, color)
   }
