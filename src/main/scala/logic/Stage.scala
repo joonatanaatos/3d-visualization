@@ -1,5 +1,8 @@
 package logic
 
+/**
+ * Stage represents the physical world in the game world.
+ */
 class Stage {
 
   private val horizontalWalls: Array[Array[Int]] = Array(

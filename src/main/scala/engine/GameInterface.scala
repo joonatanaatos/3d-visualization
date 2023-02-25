@@ -1,7 +1,7 @@
 package engine
 
 /**
- * The GameInterface is for the Engine to invoke init(), update(), render() and close() calls
+ * GameInterface is for the Engine to invoke init(), update(), render() and close() calls
  */
 trait GameInterface {
 

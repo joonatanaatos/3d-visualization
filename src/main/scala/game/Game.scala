@@ -4,6 +4,9 @@ import engine.{EngineInterface, GameInterface}
 import graphics.{Renderer, Window}
 import logic.World
 
+/**
+ * Game handles most high-level game logic.
+ */
 class Game extends GameInterface {
   private val window = new Window("3D-visualisointi", 600, 600)
   private val world = new World(window.addEventListener)

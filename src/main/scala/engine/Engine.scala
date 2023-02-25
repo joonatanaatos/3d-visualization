@@ -7,8 +7,8 @@ object Engine {
 }
 
 /**
- * The Engine class manages the main thread that the game is running on. It keeps track of time and
- * calculates when update() and render() should be called
+ * Engine manages the main thread that the game is running on. It keeps track of time and calculates
+ * when update() and render() should be called
  * @param gameInterface
  *   Interface for invoking init(), update() and render() calls
  */

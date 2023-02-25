@@ -16,6 +16,16 @@ import org.lwjgl.glfw.GLFW.{
 
 import scala.collection.mutable.Set
 
+/**
+ * Player represents the player in the game world. It stores and updates the player position based
+ * on user input.
+ * @param xPos
+ *   Initial x position
+ * @param yPos
+ *   Initial y position
+ * @param zPos
+ *   Initial z position
+ */
 class Player(xPos: Float, yPos: Float, zPos: Float) extends KeyListener, CursorListener {
   private val position = Vector3f(xPos, yPos, zPos)
   private var direction = (-math.Pi.toFloat, 0f)

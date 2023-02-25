@@ -16,7 +16,8 @@ import org.lwjgl.system.{MemoryStack, MemoryUtil}
 import scala.collection.mutable.ArrayBuffer
 
 /**
- * The window class handles most GLFW-related tasks
+ * Window represents a GLFW-window and provides an interface for interacting with it. It handles
+ * most GLFW-related tasks.
  *
  * @param title
  *   Window title

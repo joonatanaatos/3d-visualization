@@ -46,6 +46,9 @@ import java.nio.{ByteBuffer, ByteOrder, FloatBuffer}
 
 /**
  * RenderingHelper handles most low-level OpenGL code
+ *
+ * @param window
+ *   Window that is to be rendered onto
  */
 class RenderingHelper(val window: Window) {
   // x, y and z coordinate

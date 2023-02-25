@@ -27,6 +27,16 @@ import org.lwjgl.opengl.GL20.{
 import java.nio.file.{Files, Paths}
 import scala.collection.immutable
 
+/**
+ * ShaderProgram represents an OpenGL shader program. It loads the shader file with the given name
+ * from the /glsl directory and then compiles the shader. The ShaderProgram class also provides an
+ * interface for setting uniform variables but not vertex attributes.
+ *
+ * @param shaderName
+ *   Name of the shader
+ * @param uniformNames
+ *   List of uniforms used in the shader
+ */
 class ShaderProgram(val shaderName: String, val uniformNames: Array[String]) {
   private val programHandle = glCheck { glCreateProgram() }
   if programHandle == 0 then {
