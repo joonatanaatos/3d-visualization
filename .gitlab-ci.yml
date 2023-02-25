@@ -1,6 +1,7 @@
 image: openjdk:17-jdk-buster
 
 stages:
+  - build
   - lint
   - test
 
@@ -18,6 +19,11 @@ before_script:
   - apt-get install sbt -yqq
   # Log the sbt version
   - sbt sbtVersion
+
+build:
+  stage: build
+  script:
+    - sbt compile
 
 lint:
   stage: lint
