@@ -23,7 +23,7 @@ class Renderer(val world: World, val window: Window) {
   private def floorShapeMatrix(width: Float, depth: Float) =
     Matrix4f().scale(width, 1f, depth).translate(1f, 0f, 1f).rotateX(math.Pi.toFloat / 2f)
 
-  private val wallTexture = new Texture("/wall.png")
+  private val wallTexture = new Texture("wall")
 
   def render(): Unit = {
     updateViewport()

@@ -17,10 +17,20 @@ import org.lwjgl.opengl.GL11.{
 
 import java.nio.ByteBuffer
 
-class Texture(val path: String) {
+/**
+ * Texture represents an OpenGL texture object. It loads the image with the given name from the
+ * /resources/textures directory and then decodes it. With the image data, a texture object is
+ * created.
+ *
+ * @param name
+ *   Name of the texture
+ */
+class Texture(val name: String) {
   private val textureHandle: Int = loadTexture()
+
   private def loadTexture(): Int = {
     // Load and decode image
+    val path = s"/textures/$name.png"
     val imageStream = getClass.getResourceAsStream(path)
     val decoder = PNGDecoder(imageStream)
     val imageBuffer = ByteBuffer.allocateDirect(4 * decoder.getWidth * decoder.getHeight)
