@@ -10,6 +10,7 @@ lazy val root = (project in file("."))
 val lwjglVersion = "3.3.1"
 val jomlVersion = "1.10.5"
 val scalatestVersion = "3.2.15"
+val snakeYamlVersion = "1.33"
 
 val lwjglNatives = System.getProperty("os.name") match {
   case n if n.startsWith("Linux")   => "natives-linux"
@@ -29,6 +30,8 @@ libraryDependencies ++= Seq(
   "org.lwjgl" % "lwjgl-opengl" % lwjglVersion classifier lwjglNatives,
   // Java OpenGL Math Library
   "org.joml" % "joml" % jomlVersion,
+  // Snake YAML
+  "org.yaml" % "snakeyaml" % snakeYamlVersion,
   // PNG decoder
   "org.l33tlabs.twl" % "pngdecoder" % "1.0",
   // Scalatest

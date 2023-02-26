@@ -1,6 +1,6 @@
 package graphics
 
-import logic.World
+import logic.{World, Stage, Wall}
 import org.lwjgl.opengl.GL11.glViewport
 import graphics.Utils.glCheck
 import org.joml.{Matrix4f, Matrix3f, Vector3f}
@@ -33,33 +33,32 @@ class Renderer(val world: World, val window: Window) {
     // Begin draw
     val (horizontalWalls, verticalWalls) = world.stage.getWallPositions
     drawFloor(horizontalWalls.head.length, horizontalWalls.length - 1)
-    drawWallArray(horizontalWalls, "horizontal")
-    drawWallArray(verticalWalls, "vertical")
+    drawWallArray(horizontalWalls)
+    drawWallArray(verticalWalls)
   }
 
   private def drawWallArray(
-      walls: Array[Array[Int]],
-      direction: "horizontal" | "vertical",
+      walls: Array[Array[Option[Wall]]],
   ): Unit = {
     for (rowIndex <- walls.indices) {
       val wallRow = walls(rowIndex)
       for (columnIndex <- wallRow.indices) {
-        val hasWall = wallRow(columnIndex) == 1
-        if hasWall then drawWall(columnIndex, rowIndex, direction)
+        val wall = wallRow(columnIndex)
+        if wall.isDefined then drawWall(columnIndex, rowIndex, wall.get)
       }
     }
   }
 
-  private def drawWall(xPos: Int, zPos: Int, direction: "horizontal" | "vertical"): Unit = {
+  private def drawWall(xPos: Int, zPos: Int, wall: Wall): Unit = {
     // Calculate wall pos
     val wallPos = Vector3f(xPos.toFloat, 0f, zPos.toFloat)
     wallPos.mul(transitionMatrix)
     wallPos.sub(cameraPosition)
     val wallAlignment =
-      if direction == "horizontal" then Vector3f(1f, 0f, 0f) else Vector3f(0f, 0f, 1f)
+      if wall.direction.horizontal then Vector3f(0f, 0f, 1f) else Vector3f(1f, 0f, 0f)
     wallPos.add(wallAlignment)
     // Calculate wall angle
-    val angle = if direction == "vertical" then -math.Pi.toFloat / 2f else 0f
+    val angle = wall.direction.angle + math.Pi.toFloat / 2f
 
     // 1. Scale, 2. Rotate, 3. Translate
     val modelMatrix = Matrix4f()
