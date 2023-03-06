@@ -1,17 +1,17 @@
 spawn:
-  x: 3
+  x: 2
   y: 3
 stage: |-
-  1 1 1 1 1 1 1 1 1 1 1 1
-  1 0 0 0 0 0 0 0 0 0 0 1
-  1 0 0 0 0 0 0 0 0 0 0 1
-  1 0 0 0 0 0 1 1 1 0 0 1
-  1 0 0 0 0 0 1 1 1 0 0 1
-  1 0 0 0 0 0 1 1 1 0 0 1
-  1 0 0 0 0 0 0 0 0 0 0 1
-  1 0 0 0 0 0 0 0 0 0 0 1
-  1 0 0 1 1 1 1 0 0 0 0 1
-  1 0 0 0 0 0 0 0 0 0 0 1
-  1 0 0 0 0 0 0 0 0 1 0 1
-  1 0 0 0 0 0 0 0 0 0 0 1
-  1 1 1 1 1 1 1 1 1 1 1 1
+  X X X X X X X X X X X
+  X O O O X O O O O O X
+  X O O O X O O O O O X
+  X O L O X O O O O O X
+  X O O O X O O L O O X
+  X O O O X O O O O O X
+  X O O O O O O O O O X
+  X O O O O O O O O O X
+  X O L O X X X O O O X
+  X O O O X X X O O O X
+  X O O O O L O O O O X
+  X O O O O O O O O O X
+  X X X X X X X X X X X

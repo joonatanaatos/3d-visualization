@@ -106,6 +106,10 @@ class ShaderProgram(val shaderName: String, val uniformNames: Array[String]) {
     uniformNames.map(name => (name, glCheck { glGetUniformLocation(programHandle, name) })).toMap
   }
 
+  def dynamicUniform(name: String): Int = {
+    glCheck { glGetUniformLocation(programHandle, name) }
+  }
+
   def uniform(name: String): Int = {
     uniformHandles(name)
   }

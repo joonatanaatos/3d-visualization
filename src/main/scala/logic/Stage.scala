@@ -2,9 +2,11 @@ package logic
 
 import logic.Direction
 import org.yaml.snakeyaml.Yaml
+
 import java.io.{BufferedReader, InputStreamReader}
 import java.util.stream.Collectors
 import java.util.Map
+import scala.collection.mutable.ArrayBuffer
 
 class Wall(val direction: Direction)
 
@@ -15,29 +17,29 @@ class Stage {
   // Load and parse world file
   private val worldFileSource = getClass.getResourceAsStream("/world.yml")
   private val worldFile = new Yaml().load[Map[String, Any]](worldFileSource)
-  // Walls
-  private val stageString = worldFile.get("stage").asInstanceOf[String]
-  private val (horizontalWalls, verticalWalls) = generateWalls(stageString)
   // Spawn point
   private val spawnPointMap = worldFile.get("spawn").asInstanceOf[Map[String, Any]]
   private val spawnPoint = (
     spawnPointMap.get("x").asInstanceOf[Int],
     spawnPointMap.get("y").asInstanceOf[Int],
   )
+  // Parse stage string
+  private val stageString = worldFile.get("stage").asInstanceOf[String]
+  private val stageGrid = stageString.split("\n").map(_.split("\\s+"))
+  private val height = stageGrid.length
+  private val width = stageGrid.head.length
+  // Walls
+  private val (horizontalWalls, verticalWalls) = generateWalls()
+  private val lightPositions = findLights()
 
   def getWallPositions: (Array[Array[Option[Wall]]], Array[Array[Option[Wall]]]) =
     (horizontalWalls, verticalWalls)
 
+  def getLightPositions: Array[(Int, Int)] = lightPositions
+
   def getSpawnPoint: (Int, Int) = spawnPoint
 
-  private def generateWalls(
-      stageString: String,
-  ): (Array[Array[Option[Wall]]], Array[Array[Option[Wall]]]) = {
-    // Parse stage string
-    val stageGrid = stageString.split("\n").map(_.split("\\s+"))
-    val height = stageGrid.length
-    val width = stageGrid.head.length
-
+  private def generateWalls(): (Array[Array[Option[Wall]]], Array[Array[Option[Wall]]]) = {
     // There are always grid size + 1 walls
     val horizontalWalls = Array.fill[Option[Wall]](height + 1, width + 1)(None)
     val verticalWalls = Array.fill[Option[Wall]](height + 1, width + 1)(None)
@@ -45,7 +47,7 @@ class Stage {
     // Returns true if there is a wall at the given position
     def gridHasWallAt(x: Int, y: Int): Boolean = {
       if y < 0 || y >= height || x < 0 || x >= width then false
-      else stageGrid(y)(x) == "1"
+      else stageGrid(y)(x) == "X"
     }
 
     // Go through all positions
@@ -67,6 +69,27 @@ class Stage {
       }
     }
     (horizontalWalls, verticalWalls)
+  }
+
+  private def findLights(): Array[(Int, Int)] = {
+    // Returns true if there is a light at the given position
+    def gridHaslightAt(x: Int, y: Int): Boolean = {
+      if y < 0 || y >= height || x < 0 || x >= width then false
+      else stageGrid(y)(x) == "L"
+    }
+
+    val lights = ArrayBuffer[(Int, Int)]()
+
+    // Go through all positions
+    for (y <- 0 until height) {
+      for (x <- 0 until width) {
+        if gridHaslightAt(x, y) then {
+          val position: (Int, Int) = (x, y)
+          lights += position
+        }
+      }
+    }
+    lights.toArray
   }
 
   private def squareOverlapsWall(

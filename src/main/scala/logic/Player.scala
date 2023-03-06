@@ -19,15 +19,11 @@ import scala.collection.mutable.Set
 /**
  * Player represents the player in the game world. It stores and updates the player position based
  * on user input.
- * @param xPos
- *   Initial x position
- * @param yPos
- *   Initial y position
- * @param zPos
- *   Initial z position
+ * @param initialPosition
+ *   Initial player position
  */
-class Player(xPos: Float, yPos: Float, zPos: Float) extends KeyListener, CursorListener {
-  private val position = Vector3f(xPos, yPos, zPos)
+class Player(initialPosition: Vector3f) extends KeyListener, CursorListener {
+  private val position = Vector3f(initialPosition)
   private var direction = (-math.Pi.toFloat, 0f)
 
   private val pressedKeys: Set[Int] = Set()

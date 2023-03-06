@@ -6,8 +6,8 @@ package engine
 trait EngineInterface {
   def start(): Unit
   def stop(): Unit
-  def printFps(print: Boolean): Unit
-  def getPrintFps: Boolean
+  def setDebugPrints(print: Boolean): Unit
+  def getDebugPrints: Boolean
   def getFPS: Int
   def getTPS: Int
 }

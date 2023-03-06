@@ -22,7 +22,8 @@ class Engine(val desiredTps: Int, val desiredFps: Int, val gameInterface: GameIn
    * @param callback
    *   Callback function that will be invoked
    */
-  private class Runner(val desiredTps: Int, val callback: () => Unit) extends Runnable {
+  private class Runner(val name: String, val desiredTps: Int, val callback: () => Unit)
+      extends Runnable {
     private var currentTps: Int = 0
 
     private def runContinuously(): Unit = {
@@ -35,6 +36,10 @@ class Engine(val desiredTps: Int, val desiredFps: Int, val gameInterface: GameIn
           currentTps = tickCounter
           tpsTimer = System.currentTimeMillis()
           tickCounter = 0
+
+          if Engine.this.debugPrints then {
+            println(s"$name: $currentTps")
+          }
         }
       }
     }
@@ -65,6 +70,10 @@ class Engine(val desiredTps: Int, val desiredFps: Int, val gameInterface: GameIn
           currentTps = tickCounter
           tpsTimer = System.currentTimeMillis()
           tickCounter = 0
+
+          if Engine.this.debugPrints then {
+            println(s"$name: $currentTps/$desiredTps")
+          }
         }
 
         // Busy waiting
@@ -81,11 +90,11 @@ class Engine(val desiredTps: Int, val desiredFps: Int, val gameInterface: GameIn
   }
 
   private var running = false
-  private var printFps = false
+  private var debugPrints = false
 
   // Create runners
-  private val logicRunner = new Runner(desiredTps, gameInterface.update)
-  private val rendererRunner = new Runner(desiredFps, gameInterface.render)
+  private val logicRunner = new Runner("TPS", desiredTps, gameInterface.update)
+  private val rendererRunner = new Runner("FPS", desiredFps, gameInterface.render)
 
   // Start the engine
   override def start(): Unit = {
@@ -104,11 +113,11 @@ class Engine(val desiredTps: Int, val desiredFps: Int, val gameInterface: GameIn
     running = false
   }
 
-  override def printFps(print: Boolean): Unit = {
-    printFps = print
+  override def setDebugPrints(print: Boolean): Unit = {
+    debugPrints = print
   }
 
-  override def getPrintFps: Boolean = printFps
+  override def getDebugPrints: Boolean = debugPrints
 
   override def getFPS: Int = rendererRunner.getCurrentTps
 

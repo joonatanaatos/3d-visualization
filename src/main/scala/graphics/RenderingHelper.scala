@@ -31,7 +31,9 @@ import org.lwjgl.opengl.GL20.{
   glDisableVertexAttribArray,
   glEnableVertexAttribArray,
   glGetAttribLocation,
+  glUniform1f,
   glUniform1i,
+  glUniform3fv,
   glUniform4fv,
   glUniformMatrix4fv,
   glVertexAttribPointer,
@@ -39,7 +41,7 @@ import org.lwjgl.opengl.GL20.{
 import org.lwjgl.opengl.GL30.{glBindVertexArray, glDeleteVertexArrays, glGenVertexArrays}
 import org.lwjgl.system.MemoryUtil
 import graphics.Utils.glCheck
-import org.joml.{Matrix4f, Vector2f, Vector3f}
+import org.joml.{Matrix4f, Vector2f, Vector3f, Vector4f}
 import org.lwjgl.opengl.GL13.GL_MULTISAMPLE
 
 import java.nio.{ByteBuffer, ByteOrder, FloatBuffer}
@@ -68,13 +70,26 @@ class RenderingHelper(val window: Window) {
     1f, -1f, 0f, 1f, 1f, // Bottom right
   )
 
+  val maxNumberOfLights: Int = 10
+  private var pointLights: Array[(Vector3f, Float)] = Array[(Vector3f, Float)]()
+  private var ambientLightBrightness = 0f
+
   this.init()
 
   private val quadrilateralShaderProgram =
-    new ShaderProgram("quadrilateral", Array("mvpMatrix", "color"))
+    ShaderProgram("quadrilateral", Array("mvpMatrix", "color"))
 
   private val textureShaderProgram =
-    new ShaderProgram("texture", Array("mvpMatrix", "texture"))
+    ShaderProgram(
+      "texture",
+      Array(
+        "mvMatrix",
+        "pMatrix",
+        "texture",
+        "normal",
+        "ambientLightBrightness",
+      ),
+    )
 
   private val (quadrilateralVaoHandle, quadrilateralVboHandle) =
     this.createQuadrilateralVertices()
@@ -129,11 +144,34 @@ class RenderingHelper(val window: Window) {
     (vaoHandle, vboHandle)
   }
 
+  private def matrixToArray(matrix: Matrix4f): Array[Float] = {
+    val matrixArray = Array.fill[Float](16)(0)
+    matrix.get(matrixArray)
+    matrixArray
+  }
+
+  private def vectorToArray(vector: Vector3f): Array[Float] = {
+    Array(vector.x, vector.y, vector.z)
+  }
+
+  private def createViewMatrix(viewDirection: (Float, Float)): Matrix4f = {
+    Matrix4f().rotateX(viewDirection(1)).rotateY(viewDirection(0))
+  }
+
+  private def createProjectionMatrix(): Matrix4f = {
+    Matrix4f().setPerspective(
+      math.Pi.toFloat / 3f,
+      window.getAspectRatio,
+      0.1f,
+      Float.PositiveInfinity,
+    )
+  }
+
   private def createMvpMatrix(
       modelMatrix: Matrix4f,
       viewDirection: (Float, Float),
   ): Array[Float] = {
-    val mvpMatrix = new Matrix4f()
+    val mvpMatrix = Matrix4f()
     // Perspective
     mvpMatrix.setPerspective(
       math.Pi.toFloat / 3f,
@@ -190,6 +228,7 @@ class RenderingHelper(val window: Window) {
       modelMatrix: Matrix4f = Matrix4f(),
       viewDirection: (Float, Float) = (0f, 0f),
       texture: Texture,
+      normal: Vector3f,
   ): Unit = {
     // Bind correct VAO and shader program
     glCheck { textureShaderProgram.bind() }
@@ -198,18 +237,56 @@ class RenderingHelper(val window: Window) {
     glCheck { glEnableVertexAttribArray(textureCoordIndex) }
 
     // Create MVP matrix
-    val mvpMatrix = createMvpMatrix(modelMatrix, viewDirection)
+    val projectionMatrix = createProjectionMatrix()
+    val viewMatrix = createViewMatrix(viewDirection)
+
+    def applyViewMatrix(vector: Vector3f): Vector3f = {
+      val result = Vector4f(vector, 1f).mul(viewMatrix)
+      Vector3f(result.x, result.y, result.z)
+    }
+
+    val lightPositions = pointLights.map(light => applyViewMatrix(light(0)))
 
     // Set uniforms
     glCheck {
       glUniformMatrix4fv(
-        textureShaderProgram.uniform("mvpMatrix"),
+        textureShaderProgram.uniform("mvMatrix"),
         false,
-        mvpMatrix,
+        matrixToArray(Matrix4f(viewMatrix).mul(modelMatrix)),
+      )
+    }
+    glCheck {
+      glUniformMatrix4fv(
+        textureShaderProgram.uniform("pMatrix"),
+        false,
+        matrixToArray(projectionMatrix),
+      )
+    }
+    glCheck {
+      glUniform3fv(
+        textureShaderProgram.uniform("normal"),
+        vectorToArray(applyViewMatrix(normal)),
       )
     }
     glCheck {
       glUniform1i(textureShaderProgram.uniform("texture"), 0)
+    }
+    glCheck {
+      glUniform1f(textureShaderProgram.uniform("ambientLightBrightness"), ambientLightBrightness)
+    }
+    for (i <- 0 until math.min(pointLights.length, maxNumberOfLights)) {
+      glCheck {
+        glUniform3fv(
+          textureShaderProgram.dynamicUniform(s"pointLights[$i].position"),
+          vectorToArray(lightPositions(i)),
+        )
+      }
+      glCheck {
+        glUniform1f(
+          textureShaderProgram.dynamicUniform(s"pointLights[$i].brightness"),
+          pointLights(i)(1),
+        )
+      }
     }
 
     // Bind texture
@@ -230,6 +307,15 @@ class RenderingHelper(val window: Window) {
   def clear(): Unit = {
     // Clear the frame buffer
     glCheck { glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT) }
+  }
+
+  def setAmbientLightBrightness(brightness: Float): Unit = ambientLightBrightness = brightness
+
+  def setPointLights(lights: Array[(Vector3f, Float)]): Unit = {
+    if lights.length > maxNumberOfLights then {
+      throw RuntimeException(s"Can't set more than $maxNumberOfLights lights")
+    }
+    pointLights = lights
   }
 
   def destroy(): Unit = {

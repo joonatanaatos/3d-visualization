@@ -7,5 +7,6 @@ import logic.World
 def main(): Unit = {
   val game = new Game()
   val engine = new Engine(60, Engine.UNLIMITED, game)
+  engine.setDebugPrints(true)
   engine.start()
 }

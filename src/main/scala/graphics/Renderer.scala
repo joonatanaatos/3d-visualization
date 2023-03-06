@@ -14,25 +14,28 @@ import org.joml.{Matrix4f, Matrix3f, Vector3f}
  */
 class Renderer(val world: World, val window: Window) {
   private val renderingHelper = RenderingHelper(window)
-  private val cameraRelativeToPlayer = Vector3f(0f, 0.8f, 0f)
+  private val cameraRelativeToPlayer = Vector3f(0f, 0.4f, 0f)
   private var cameraPosition = Vector3f(cameraRelativeToPlayer)
   private var cameraDirection = (0f, 0f)
 
-  private val transitionMatrix = Matrix3f().scale(2)
-  private val wallShapeMatrix = Matrix4f().scale(1f, 0.8f, 1f).translate(0f, 1f, 0f)
-  private def floorShapeMatrix(width: Float, depth: Float) =
-    Matrix4f().scale(width, 1f, depth).translate(1f, 0f, 1f).rotateX(math.Pi.toFloat / 2f)
+  private val wallHeight = world.wallHeight
+  private val wallShapeMatrix =
+    Matrix4f().scale(1f, wallHeight, 1f).scale(0.5f).translate(0f, 1f, 0f)
+  private val floorShapeMatrix =
+    Matrix4f().scale(0.5f).translate(1f, 0f, 1f).rotateX(math.Pi.toFloat / 2f)
 
   private val wallTexture = new Texture("wall")
+  private val floorTexture = new Texture("floor")
 
   def render(): Unit = {
     updateViewport()
     updateCameraPosition()
+    updateLighting()
     renderingHelper.clear()
 
     // Begin draw
     val (horizontalWalls, verticalWalls) = world.stage.getWallPositions
-    drawFloor(horizontalWalls.head.length, horizontalWalls.length - 1)
+    drawFloorAndCeiling(horizontalWalls.head.length - 1, horizontalWalls.length - 1)
     drawWallArray(horizontalWalls)
     drawWallArray(verticalWalls)
   }
@@ -52,13 +55,13 @@ class Renderer(val world: World, val window: Window) {
   private def drawWall(xPos: Int, zPos: Int, wall: Wall): Unit = {
     // Calculate wall pos
     val wallPos = Vector3f(xPos.toFloat, 0f, zPos.toFloat)
-    wallPos.mul(transitionMatrix)
     wallPos.sub(cameraPosition)
     val wallAlignment =
-      if wall.direction.horizontal then Vector3f(0f, 0f, 1f) else Vector3f(1f, 0f, 0f)
+      if wall.direction.horizontal then Vector3f(0f, 0f, 0.5f) else Vector3f(0.5f, 0f, 0f)
     wallPos.add(wallAlignment)
     // Calculate wall angle
     val angle = wall.direction.angle + math.Pi.toFloat / 2f
+    val normal = Vector3f(1f, 0f, 0f).rotateY(wall.direction.angle).normalize()
 
     // 1. Scale, 2. Rotate, 3. Translate
     val modelMatrix = Matrix4f()
@@ -66,20 +69,35 @@ class Renderer(val world: World, val window: Window) {
     modelMatrix.rotateY(angle)
     modelMatrix.mul(wallShapeMatrix)
 
-    renderingHelper.drawImage(modelMatrix, cameraDirection, wallTexture)
+    renderingHelper.drawImage(
+      modelMatrix,
+      cameraDirection,
+      wallTexture,
+      normal,
+    )
   }
 
-  private def drawFloor(width: Int, depth: Int): Unit = {
-    val floorPos = Vector3f()
-    floorPos.sub(cameraPosition)
+  private def drawFloorAndCeiling(width: Int, depth: Int): Unit = {
+    val position = Vector3f()
+    position.sub(cameraPosition)
 
-    val modelMatrix = Matrix4f()
-    modelMatrix.translate(floorPos)
-    modelMatrix.mul(floorShapeMatrix(width.toFloat, depth.toFloat))
+    for (x <- 0 until width) {
+      for (z <- 0 until depth) {
+        for (y <- Array(0f, wallHeight)) {
+          val modelMatrix = Matrix4f()
+          modelMatrix.translate(position)
+          modelMatrix.translate(x, y, z)
+          modelMatrix.mul(floorShapeMatrix)
 
-    val color = Array(0.9f, 0.9f, 0.9f, 1f)
-
-    renderingHelper.drawQuadrilateral(modelMatrix, cameraDirection, color)
+          renderingHelper.drawImage(
+            modelMatrix,
+            cameraDirection,
+            floorTexture,
+            Vector3f(0f, if y == 0f then 1f else -1f, 0f),
+          )
+        }
+      }
+    }
   }
 
   private def updateViewport(): Unit = {
@@ -88,8 +106,18 @@ class Renderer(val world: World, val window: Window) {
     }
   }
 
+  private def updateLighting(): Unit = {
+    renderingHelper.setAmbientLightBrightness(0.01f)
+    renderingHelper.setPointLights(
+      world.lights
+        .map(light => (light.getPosition.sub(cameraPosition), light.getBrightness))
+        .sortBy(light => light(0).length())
+        .take(renderingHelper.maxNumberOfLights),
+    )
+  }
+
   private def updateCameraPosition(): Unit = {
-    cameraPosition = world.player.getPosition.mul(transitionMatrix).add(cameraRelativeToPlayer)
+    cameraPosition = world.player.getPosition.add(cameraRelativeToPlayer)
     cameraDirection = world.player.getDirection
   }
 
