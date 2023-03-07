@@ -17,7 +17,7 @@ in float cameraDistance;
 in vec2 vTexCoord;
 
 float distanceFactor() {
-    float steepness = 5.0f;
+    float steepness = 10.0f;
     return pow(steepness, 2.0f) / pow(cameraDistance + steepness, 2.0f);
 }
 
@@ -27,10 +27,22 @@ vec3 getAmbientLight(vec3 rgb) {
 
 vec3 getDiffuseLight(vec3 rgb, PointLight pointLight) {
     float steepness = 0.8f;
-    vec3 light = pointLight.position - viewPos;
-    float angleFactor = max(0.0f, dot(normalize(normal), normalize(light)));
+    vec3 lightDir = pointLight.position - viewPos;
+    float angleFactor = max(0.0f, dot(normalize(normal), normalize(lightDir)));
     float brightnessFactor = pointLight.brightness;
-    float lightDistance = length(light);
+    float lightDistance = length(lightDir);
+    float distanceFactor = pow(steepness, 2.0f) / pow(lightDistance + steepness, 2.0f);
+    return rgb * brightnessFactor * angleFactor * distanceFactor;
+}
+
+vec3 getSpecularLight(vec3 rgb, PointLight pointLight) {
+    float steepness = 0.8f;
+    vec3 lightDir = pointLight.position - viewPos;
+    vec3 viewDir = viewPos;
+    vec3 reflectDir = reflect(lightDir, normal);
+    float angleFactor = pow(max(0.0f, dot(normalize(viewDir), normalize(reflectDir))), 4.0f);
+    float brightnessFactor = pointLight.brightness;
+    float lightDistance = length(lightDir);
     float distanceFactor = pow(steepness, 2.0f) / pow(lightDistance + steepness, 2.0f);
     return rgb * brightnessFactor * angleFactor * distanceFactor;
 }
@@ -43,8 +55,9 @@ void main() {
     vec3 light = getAmbientLight(originalRGB);
     for (int i = 0; i < POINT_LIGHTS; i++) {
         light += getDiffuseLight(originalRGB, pointLights[i]);
+        light += getSpecularLight(originalRGB, pointLights[i]);
     }
 
-    vec3 finalRGB = light;
+    vec3 finalRGB = distanceFactor() * light;
     gl_FragColor = vec4(finalRGB, alpha);
 }

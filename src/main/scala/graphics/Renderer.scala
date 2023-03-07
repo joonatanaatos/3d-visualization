@@ -107,7 +107,7 @@ class Renderer(val world: World, val window: Window) {
   }
 
   private def updateLighting(): Unit = {
-    renderingHelper.setAmbientLightBrightness(0.01f)
+    renderingHelper.setAmbientLightBrightness(0.05f)
     renderingHelper.setPointLights(
       world.lights
         .map(light => (light.getPosition.sub(cameraPosition), light.getBrightness))
