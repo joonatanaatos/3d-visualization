@@ -8,7 +8,7 @@ import java.util.stream.Collectors
 import java.util.Map
 import scala.collection.mutable.ArrayBuffer
 
-class Wall(val direction: Direction)
+class Wall(val direction: Direction, val xPos: Int, val zPos: Int)
 
 /**
  * Stage represents the physical world in the game world.
@@ -26,8 +26,8 @@ class Stage {
   // Parse stage string
   private val stageString = worldFile.get("stage").asInstanceOf[String]
   private val stageGrid = stageString.split("\n").map(_.split("\\s+"))
-  private val height = stageGrid.length
-  private val width = stageGrid.head.length
+  val height = stageGrid.length
+  val width = stageGrid.head.length
   // Walls
   private val (horizontalWalls, verticalWalls) = generateWalls()
   private val lightPositions = findLights()
@@ -57,12 +57,16 @@ class Stage {
           // Only add a wall if the neighbouring position doesn't have a wall
           Array(1, -1).foreach(d => {
             if !gridHasWallAt(x + d, y) then {
-              verticalWalls(y)(x + (d + 1) / 2) =
-                Option(Wall(if d == 1 then Direction.East else Direction.West))
+              val xPos = x + (d + 1) / 2
+              val yPos = y
+              verticalWalls(yPos)(xPos) =
+                Option(Wall(if d == 1 then Direction.East else Direction.West, xPos, yPos))
             }
             if !gridHasWallAt(x, y + d) then {
-              horizontalWalls(y + (d + 1) / 2)(x) =
-                Option(Wall(if d == 1 then Direction.South else Direction.North))
+              val xPos = x
+              val yPos = y + (d + 1) / 2
+              horizontalWalls(yPos)(xPos) =
+                Option(Wall(if d == 1 then Direction.South else Direction.North, xPos, yPos))
             }
           })
         }

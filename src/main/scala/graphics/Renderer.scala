@@ -34,27 +34,31 @@ class Renderer(val world: World, val window: Window) {
     renderingHelper.clear()
 
     // Begin draw
+    drawFloorAndCeiling(world.stage.width - 1, world.stage.height - 1)
+    visibleWalls().foreach(drawWall)
+  }
+
+  private def visibleWalls(): Array[Wall] = {
     val (horizontalWalls, verticalWalls) = world.stage.getWallPositions
-    drawFloorAndCeiling(horizontalWalls.head.length - 1, horizontalWalls.length - 1)
-    drawWallArray(horizontalWalls)
-    drawWallArray(verticalWalls)
-  }
 
-  private def drawWallArray(
-      walls: Array[Array[Option[Wall]]],
-  ): Unit = {
-    for (rowIndex <- walls.indices) {
-      val wallRow = walls(rowIndex)
-      for (columnIndex <- wallRow.indices) {
-        val wall = wallRow(columnIndex)
-        if wall.isDefined then drawWall(columnIndex, rowIndex, wall.get)
-      }
+    val playerPos = world.player.getPosition
+    val playerDir = world.player.getDirection
+
+    def isVisible(wallOption: Option[Wall]): Boolean = {
+      if wallOption.isEmpty then return false
+      val wall = wallOption.get
+      val wallPos = Vector3f(wall.xPos, 0f, wall.zPos)
+      wallPos.sub(playerPos)
+      wallPos.rotateY(playerDir(0))
+      wallPos.z < 1
     }
+
+    (horizontalWalls ++ verticalWalls).flatten.filter(isVisible).map(w => w.get)
   }
 
-  private def drawWall(xPos: Int, zPos: Int, wall: Wall): Unit = {
+  private def drawWall(wall: Wall): Unit = {
     // Calculate wall pos
-    val wallPos = Vector3f(xPos.toFloat, 0f, zPos.toFloat)
+    val wallPos = Vector3f(wall.xPos.toFloat, 0f, wall.zPos.toFloat)
     wallPos.sub(cameraPosition)
     val wallAlignment =
       if wall.direction.horizontal then Vector3f(0f, 0f, 0.5f) else Vector3f(0.5f, 0f, 0f)
