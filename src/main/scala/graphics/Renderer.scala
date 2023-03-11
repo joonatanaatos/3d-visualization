@@ -34,7 +34,7 @@ class Renderer(val world: World, val window: Window) {
     renderingHelper.clear()
 
     // Begin draw
-    drawFloorAndCeiling(world.stage.width - 1, world.stage.height - 1)
+    drawFloorAndCeiling(world.stage.width, world.stage.height)
     visibleWalls().foreach(drawWall)
   }
 
@@ -111,7 +111,7 @@ class Renderer(val world: World, val window: Window) {
   }
 
   private def updateLighting(): Unit = {
-    renderingHelper.setAmbientLightBrightness(0.05f)
+    renderingHelper.setAmbientLightBrightness(0.04f)
     renderingHelper.setPointLights(
       world.lights
         .map(light => (light.getPosition.sub(cameraPosition), light.getBrightness))

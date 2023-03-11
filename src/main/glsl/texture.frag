@@ -16,9 +16,11 @@ in vec3 viewPos;
 in float cameraDistance;
 in vec2 vTexCoord;
 
+float lightSteepness = 0.4f;
+float distanceSteepness = 8.0f;
+
 float distanceFactor() {
-    float steepness = 10.0f;
-    return pow(steepness, 2.0f) / pow(cameraDistance + steepness, 2.0f);
+    return pow(distanceSteepness, 2.0f) / pow(cameraDistance + distanceSteepness, 2.0f);
 }
 
 vec3 getAmbientLight(vec3 rgb) {
@@ -26,24 +28,22 @@ vec3 getAmbientLight(vec3 rgb) {
 }
 
 vec3 getDiffuseLight(vec3 rgb, PointLight pointLight) {
-    float steepness = 0.8f;
     vec3 lightDir = pointLight.position - viewPos;
     float angleFactor = max(0.0f, dot(normalize(normal), normalize(lightDir)));
     float brightnessFactor = pointLight.brightness;
     float lightDistance = length(lightDir);
-    float distanceFactor = pow(steepness, 2.0f) / pow(lightDistance + steepness, 2.0f);
+    float distanceFactor = pow(lightSteepness, 2.0f) / pow(lightDistance + lightSteepness, 2.0f);
     return rgb * brightnessFactor * angleFactor * distanceFactor;
 }
 
 vec3 getSpecularLight(vec3 rgb, PointLight pointLight) {
-    float steepness = 0.8f;
     vec3 lightDir = pointLight.position - viewPos;
     vec3 viewDir = viewPos;
     vec3 reflectDir = reflect(lightDir, normal);
     float angleFactor = pow(max(0.0f, dot(normalize(viewDir), normalize(reflectDir))), 4.0f);
     float brightnessFactor = pointLight.brightness;
     float lightDistance = length(lightDir);
-    float distanceFactor = pow(steepness, 2.0f) / pow(lightDistance + steepness, 2.0f);
+    float distanceFactor = pow(lightSteepness, 2.0f) / pow(lightDistance + lightSteepness, 2.0f);
     return rgb * brightnessFactor * angleFactor * distanceFactor;
 }
 

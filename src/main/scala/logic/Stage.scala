@@ -46,8 +46,15 @@ class Stage {
 
     // Returns true if there is a wall at the given position
     def gridHasWallAt(x: Int, y: Int): Boolean = {
-      if y < 0 || y >= height || x < 0 || x >= width then false
-      else stageGrid(y)(x) == "X"
+      try {
+        if y < 0 || y >= height || x < 0 || x >= width then false
+        else stageGrid(y)(x) == "X"
+      } catch {
+        case _: ArrayIndexOutOfBoundsException =>
+          throw new RuntimeException(
+            s"Stage configuration invalid: Could not parse tile at (x = $x, y = $y)",
+          )
+      }
     }
 
     // Go through all positions
