@@ -9,15 +9,18 @@ import org.lwjgl.opengl.GL11.{
   GL_FLOAT,
   GL_LEQUAL,
   GL_ONE_MINUS_SRC_ALPHA,
+  GL_RENDERER,
   GL_SRC_ALPHA,
   GL_TRIANGLES,
   GL_TRIANGLE_STRIP,
+  GL_VERSION,
   glBlendFunc,
   glClear,
   glClearColor,
   glDepthFunc,
   glDrawArrays,
   glEnable,
+  glGetString,
 }
 import org.lwjgl.opengl.GL15.{
   GL_ARRAY_BUFFER,
@@ -75,6 +78,7 @@ class RenderingHelper(val window: Window) {
   private var ambientLightBrightness = 0f
 
   this.init()
+  this.logOpenGLState()
 
   private val quadrilateralShaderProgram =
     ShaderProgram("quadrilateral", Array("mvpMatrix", "color"))
@@ -107,6 +111,14 @@ class RenderingHelper(val window: Window) {
 
     // Set clear color to black
     glCheck { glClearColor(0f, 0f, 0f, 0f) }
+  }
+
+  private def logOpenGLState(): Unit = {
+    println(s"""
+         |OpenGL initialized:
+         | - Version: ${glCheck { glGetString(GL_VERSION) }}
+         | - Renderer: ${glCheck { glGetString(GL_RENDERER) }}
+         |""".stripMargin)
   }
 
   private def createQuadrilateralVertices(): (Int, Int) = {
