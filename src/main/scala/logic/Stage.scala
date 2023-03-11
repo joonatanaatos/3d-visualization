@@ -35,7 +35,7 @@ class Stage {
   def getWallPositions: (Array[Array[Option[Wall]]], Array[Array[Option[Wall]]]) =
     (horizontalWalls, verticalWalls)
 
-  def getLightPositions: Array[(Int, Int)] = lightPositions
+  def getLightPositions: Array[(Int, Int, Boolean)] = lightPositions
 
   def getSpawnPoint: (Int, Int) = spawnPoint
 
@@ -75,20 +75,23 @@ class Stage {
     (horizontalWalls, verticalWalls)
   }
 
-  private def findLights(): Array[(Int, Int)] = {
-    // Returns true if there is a light at the given position
-    def gridHaslightAt(x: Int, y: Int): Boolean = {
-      if y < 0 || y >= height || x < 0 || x >= width then false
-      else stageGrid(y)(x) == "L"
+  private def findLights(): Array[(Int, Int, Boolean)] = {
+    def lightAt(x: Int, y: Int): Option[Boolean] = {
+      if y < 0 || y >= height || x < 0 || x >= width then return None
+      val character = stageGrid(y)(x)
+      if character == "L" then Option(false)
+      else if character == "l" then Option(true)
+      else None
     }
 
-    val lights = ArrayBuffer[(Int, Int)]()
+    val lights = ArrayBuffer[(Int, Int, Boolean)]()
 
     // Go through all positions
     for (y <- 0 until height) {
       for (x <- 0 until width) {
-        if gridHaslightAt(x, y) then {
-          val position: (Int, Int) = (x, y)
+        val light = lightAt(x, y)
+        if light.isDefined then {
+          val position: (Int, Int, Boolean) = (x, y, light.get)
           lights += position
         }
       }
