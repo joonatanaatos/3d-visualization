@@ -83,6 +83,9 @@ class RenderingHelper(val window: Window) {
   private val quadrilateralShaderProgram =
     ShaderProgram("quadrilateral", Array("mvpMatrix", "color"))
 
+  private val imageShaderProgram =
+    ShaderProgram("image", Array("modelMatrix", "texture", "invertColor"))
+
   private val textureShaderProgram =
     ShaderProgram(
       "texture",
@@ -236,7 +239,18 @@ class RenderingHelper(val window: Window) {
     glCheck { quadrilateralShaderProgram.unbind() }
   }
 
-  def drawImage(
+  /**
+   * Draws a textured quadrilateral and applies a 3D transformation.
+   * @param modelMatrix
+   *   model matrix
+   * @param viewDirection
+   *   view direction
+   * @param texture
+   *   texture object
+   * @param normal
+   *   normal vector
+   */
+  def drawTexture(
       modelMatrix: Matrix4f = Matrix4f(),
       viewDirection: (Float, Float) = (0f, 0f),
       texture: Texture,
@@ -307,13 +321,65 @@ class RenderingHelper(val window: Window) {
     // Draw vertices
     glCheck { glDrawArrays(GL_TRIANGLE_STRIP, 0, 4) }
 
-    // Unbind everything and restore state
+    // Unbind texture
     texture.unbind()
 
+    // Unbind everything and restore state
     glCheck { glDisableVertexAttribArray(vertexPosIndex) }
     glCheck { glDisableVertexAttribArray(textureCoordIndex) }
     glCheck { glBindVertexArray(0) }
     glCheck { textureShaderProgram.unbind() }
+  }
+
+  /**
+   * Draws a textured quadrilateral without applying a 3D transformation.
+   * @param modelMatrix
+   *   model matrix
+   * @param texture
+   *   texture object
+   */
+  def drawImage(
+      modelMatrix: Matrix4f = Matrix4f(),
+      texture: Texture,
+  ): Unit = {
+    // Bind correct VAO and shader program
+    glCheck { imageShaderProgram.bind() }
+    glCheck { glBindVertexArray(quadrilateralVaoHandle) }
+    glCheck { glEnableVertexAttribArray(vertexPosIndex) }
+    glCheck { glEnableVertexAttribArray(textureCoordIndex) }
+
+    modelMatrix.translate(0f, 0f, -0.5f)
+
+    glCheck {
+      glUniformMatrix4fv(
+        imageShaderProgram.uniform("modelMatrix"),
+        false,
+        matrixToArray(modelMatrix),
+      )
+    }
+
+    glCheck {
+      glUniform1i(imageShaderProgram.uniform("invertColor"), 1)
+    }
+
+    glCheck {
+      glUniform1i(imageShaderProgram.uniform("texture"), 0)
+    }
+
+    // Bind texture
+    texture.bind()
+
+    // Draw vertices
+    glCheck { glDrawArrays(GL_TRIANGLE_STRIP, 0, 4) }
+
+    // Unbind texture
+    texture.unbind()
+
+    // Unbind everything and restore state
+    glCheck { glDisableVertexAttribArray(vertexPosIndex) }
+    glCheck { glDisableVertexAttribArray(textureCoordIndex) }
+    glCheck { glBindVertexArray(0) }
+    glCheck { imageShaderProgram.unbind() }
   }
 
   def clear(): Unit = {

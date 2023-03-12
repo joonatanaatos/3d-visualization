@@ -5,7 +5,7 @@ import org.joml.Vector3f
 class Demon(initialPosition: Vector3f) extends GameObject(initialPosition) {
   val height = 0.6f
   val size = 0.75f
-  private val movementSpeed = 0.4f
+  private val movementSpeed = 0.2f
   private var direction = 0f
   private val attackThreshold = 8f
   private val scareThreshold = 0.5f
@@ -24,7 +24,10 @@ class Demon(initialPosition: Vector3f) extends GameObject(initialPosition) {
     direction = -difference.angleSigned(Vector3f(0f, 0f, 1f), Vector3f(0f, 1f, 0f))
     val distance = difference.length
     if distance < attackThreshold then move(world)
-    if distance < scareThreshold then isDead = true
+    if distance < scareThreshold then {
+      isDead = true
+      world.startScare(this)
+    }
   }
 
   def getDirection: Float = direction

@@ -40,6 +40,9 @@ class Renderer(val world: World, val window: Window) {
     drawFloorAndCeiling(world.stage.width, world.stage.height)
     visibleWalls().foreach(drawWall)
     world.getGameObjects.foreach(drawGameObject)
+
+    val (scareCause, scareTimer) = world.getScareStatus
+    if scareCause.isDefined then drawScare(scareCause.get, scareTimer)
   }
 
   private def visibleWalls(): Array[Wall] = {
@@ -77,7 +80,7 @@ class Renderer(val world: World, val window: Window) {
     modelMatrix.rotateY(angle)
     modelMatrix.mul(wallShapeMatrix)
 
-    renderingHelper.drawImage(
+    renderingHelper.drawTexture(
       modelMatrix,
       cameraDirection,
       wallTexture,
@@ -104,7 +107,7 @@ class Renderer(val world: World, val window: Window) {
     modelMatrix.rotateY(angle)
     modelMatrix.mul(creatureShapeMatrix(demon.size, demon.height))
 
-    renderingHelper.drawImage(
+    renderingHelper.drawTexture(
       modelMatrix,
       cameraDirection,
       demonTexture,
@@ -124,7 +127,7 @@ class Renderer(val world: World, val window: Window) {
           modelMatrix.translate(x, y, z)
           modelMatrix.mul(floorShapeMatrix)
 
-          renderingHelper.drawImage(
+          renderingHelper.drawTexture(
             modelMatrix,
             cameraDirection,
             floorTexture,
@@ -133,6 +136,15 @@ class Renderer(val world: World, val window: Window) {
         }
       }
     }
+  }
+
+  private def drawScare(demon: Demon, scareTimer: Int): Unit = {
+    val modelMatrix = Matrix4f()
+    modelMatrix.translate(0f, -0.2f, 0f)
+    modelMatrix.scale(1.6f - (scareTimer / 200f))
+    modelMatrix.scaleXY(demon.size, window.getAspectRatio)
+
+    renderingHelper.drawImage(modelMatrix, demonTexture)
   }
 
   private def updateViewport(): Unit = {

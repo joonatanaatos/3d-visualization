@@ -14,6 +14,10 @@ class World(val addEventListener: EventListener => Unit) {
   val wallHeight = 0.8f
   val stage = new Stage()
 
+  private val scareTime = 60
+  private var scareTimer = 0
+  private var scareCause: Option[Demon] = None
+
   private val spawnPoint = stage.getSpawnPoint
 
   val lights: Array[Light] = stage.getLightPositions.map(light =>
@@ -33,12 +37,29 @@ class World(val addEventListener: EventListener => Unit) {
   private var gameObjects: ArrayBuffer[GameObject] =
     ArrayBuffer[GameObject](lights ++ demons ++ Array(player): _*)
 
+  addEventListener(player)
+
   def tick(): Unit = {
+    updateTimers()
     gameObjects.foreach(_.tick(this))
     gameObjects = gameObjects.filter(!_.isDead)
   }
 
+  private def updateTimers(): Unit = {
+    if (scareTimer > 0) {
+      scareTimer -= 1
+      if (scareTimer == 0) {
+        scareCause = None
+      }
+    }
+  }
+
+  def startScare(demon: Demon): Unit = {
+    scareTimer = scareTime
+    scareCause = Option(demon)
+  }
+
   def getGameObjects: Array[GameObject] = gameObjects.toArray
 
-  addEventListener(player)
+  def getScareStatus: (Option[Demon], Int) = (scareCause, scareTimer)
 }

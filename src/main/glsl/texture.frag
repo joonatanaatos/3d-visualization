@@ -50,7 +50,7 @@ vec3 getSpecularLight(vec3 rgb, PointLight pointLight) {
 void main() {
     vec4 color = texture2D(texture, vTexCoord);
     float alpha = color.a;
-    vec3 originalRGB = vec3(color.r, color.g, color.b);
+    vec3 originalRGB = color.rgb;
 
     vec3 light = getAmbientLight(originalRGB);
     for (int i = 0; i < POINT_LIGHTS; i++) {
