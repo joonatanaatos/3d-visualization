@@ -6,8 +6,7 @@ class Light(
     initialPosition: Vector3f,
     private var brightness: Float,
     flicker: Boolean = false,
-) {
-  private val position = Vector3f(initialPosition)
+) extends GameObject(initialPosition) {
   private val maxBrightness = brightness
   private val minBrightness = 0.1f
   private val flickerTime = 10
@@ -15,7 +14,7 @@ class Light(
   private var flickerTimer = 0
   private var timeSinceLastFlicker = 0
 
-  def tick(): Unit = {
+  override def tick(world: World): Unit = {
     if flicker then updateFlicker()
   }
 
@@ -34,6 +33,5 @@ class Light(
     }
   }
 
-  def getPosition: Vector3f = Vector3f(position)
   def getBrightness: Float = brightness
 }

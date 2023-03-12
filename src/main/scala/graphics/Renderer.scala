@@ -1,9 +1,9 @@
 package graphics
 
-import logic.{World, Stage, Wall}
+import logic.{Demon, GameObject, Stage, Wall, World}
 import org.lwjgl.opengl.GL11.glViewport
 import graphics.Utils.glCheck
-import org.joml.{Matrix4f, Matrix3f, Vector3f}
+import org.joml.{Matrix3f, Matrix4f, Vector3f}
 
 /**
  * Renderer draws the World onto the screen
@@ -20,12 +20,15 @@ class Renderer(val world: World, val window: Window) {
 
   private val wallHeight = world.wallHeight
   private val wallShapeMatrix =
-    Matrix4f().scale(1f, wallHeight, 1f).scale(0.5f).translate(0f, 1f, 0f)
+    Matrix4f().scaleXY(1f, wallHeight).scale(0.5f).translate(0f, 1f, 0f)
   private val floorShapeMatrix =
     Matrix4f().scale(0.5f).translate(1f, 0f, 1f).rotateX(math.Pi.toFloat / 2f)
+  private def creatureShapeMatrix(width: Float, height: Float) =
+    Matrix4f().scaleXY(width, 1f).scale(0.5f * height).translate(0f, 1f, 0f)
 
-  private val wallTexture = new Texture("wall")
-  private val floorTexture = new Texture("floor")
+  private val wallTexture = Texture("wall")
+  private val floorTexture = Texture("floor")
+  private val demonTexture = Texture("demon")
 
   def render(): Unit = {
     updateViewport()
@@ -36,6 +39,7 @@ class Renderer(val world: World, val window: Window) {
     // Begin draw
     drawFloorAndCeiling(world.stage.width, world.stage.height)
     visibleWalls().foreach(drawWall)
+    world.getGameObjects.foreach(drawGameObject)
   }
 
   private def visibleWalls(): Array[Wall] = {
@@ -77,6 +81,33 @@ class Renderer(val world: World, val window: Window) {
       modelMatrix,
       cameraDirection,
       wallTexture,
+      normal,
+    )
+  }
+
+  private def drawGameObject(gameObject: GameObject): Unit = {
+    gameObject match {
+      case demon: Demon => drawDemon(demon)
+      case _            =>
+    }
+  }
+
+  private def drawDemon(demon: Demon): Unit = {
+    val demonPos = demon.getPosition
+    val angle = demon.getDirection
+    val normal = Vector3f(0f, 0f, 1f).rotateY(angle)
+
+    demonPos.sub(cameraPosition)
+
+    val modelMatrix = Matrix4f()
+    modelMatrix.translate(demonPos)
+    modelMatrix.rotateY(angle)
+    modelMatrix.mul(creatureShapeMatrix(demon.size, demon.height))
+
+    renderingHelper.drawImage(
+      modelMatrix,
+      cameraDirection,
+      demonTexture,
       normal,
     )
   }

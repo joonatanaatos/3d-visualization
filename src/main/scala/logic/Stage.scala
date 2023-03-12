@@ -26,18 +26,29 @@ class Stage {
   // Parse stage string
   private val stageString = worldFile.get("stage").asInstanceOf[String]
   private val stageGrid = stageString.split("\n").map(_.split("\\s+"))
-  val height = stageGrid.length
-  val width = stageGrid.head.length
+  val height: Int = stageGrid.length
+  val width: Int = stageGrid.head.length
   // Walls
   private val (horizontalWalls, verticalWalls) = generateWalls()
   private val lightPositions = findLights()
+  private val demonPositions = findDemons()
 
   def getWallPositions: (Array[Array[Option[Wall]]], Array[Array[Option[Wall]]]) =
     (horizontalWalls, verticalWalls)
 
   def getLightPositions: Array[(Int, Int, Boolean)] = lightPositions
 
+  def getDemonPositions: Array[(Int, Int)] = demonPositions
+
   def getSpawnPoint: (Int, Int) = spawnPoint
+
+  private def loopThroughWalls(f: (Int, Int) => Unit): Unit = {
+    for (y <- 0 until height) {
+      for (x <- 0 until width) {
+        f(x, y)
+      }
+    }
+  }
 
   private def generateWalls(): (Array[Array[Option[Wall]]], Array[Array[Option[Wall]]]) = {
     // There are always grid size + 1 walls
@@ -57,28 +68,25 @@ class Stage {
       }
     }
 
-    // Go through all positions
-    for (y <- 0 until height) {
-      for (x <- 0 until width) {
-        if gridHasWallAt(x, y) then {
-          // Only add a wall if the neighbouring position doesn't have a wall
-          Array(1, -1).foreach(d => {
-            if !gridHasWallAt(x + d, y) then {
-              val xPos = x + (d + 1) / 2
-              val yPos = y
-              verticalWalls(yPos)(xPos) =
-                Option(Wall(if d == 1 then Direction.East else Direction.West, xPos, yPos))
-            }
-            if !gridHasWallAt(x, y + d) then {
-              val xPos = x
-              val yPos = y + (d + 1) / 2
-              horizontalWalls(yPos)(xPos) =
-                Option(Wall(if d == 1 then Direction.South else Direction.North, xPos, yPos))
-            }
-          })
-        }
+    loopThroughWalls((x, y) => {
+      if gridHasWallAt(x, y) then {
+        // Only add a wall if the neighbouring position doesn't have a wall
+        Array(1, -1).foreach(d => {
+          if !gridHasWallAt(x + d, y) then {
+            val xPos = x + (d + 1) / 2
+            val yPos = y
+            verticalWalls(yPos)(xPos) =
+              Option(Wall(if d == 1 then Direction.East else Direction.West, xPos, yPos))
+          }
+          if !gridHasWallAt(x, y + d) then {
+            val xPos = x
+            val yPos = y + (d + 1) / 2
+            horizontalWalls(yPos)(xPos) =
+              Option(Wall(if d == 1 then Direction.South else Direction.North, xPos, yPos))
+          }
+        })
       }
-    }
+    })
     (horizontalWalls, verticalWalls)
   }
 
@@ -93,17 +101,31 @@ class Stage {
 
     val lights = ArrayBuffer[(Int, Int, Boolean)]()
 
-    // Go through all positions
-    for (y <- 0 until height) {
-      for (x <- 0 until width) {
-        val light = lightAt(x, y)
-        if light.isDefined then {
-          val position: (Int, Int, Boolean) = (x, y, light.get)
-          lights += position
-        }
+    loopThroughWalls((x, y) => {
+      val light = lightAt(x, y)
+      if light.isDefined then {
+        val position: (Int, Int, Boolean) = (x, y, light.get)
+        lights += position
       }
-    }
+    })
     lights.toArray
+  }
+
+  private def findDemons(): Array[(Int, Int)] = {
+    def demonAt(x: Int, y: Int): Boolean = {
+      if y < 0 || y >= height || x < 0 || x >= width then return false
+      stageGrid(y)(x) == "d"
+    }
+
+    val demons = ArrayBuffer[(Int, Int)]()
+
+    loopThroughWalls((x, y) => {
+      if demonAt(x, y) then {
+        val position: (Int, Int) = (x, y)
+        demons += position
+      }
+    })
+    demons.toArray
   }
 
   private def squareOverlapsWall(

@@ -17,7 +17,7 @@ in float cameraDistance;
 in vec2 vTexCoord;
 
 float lightSteepness = 0.4f;
-float distanceSteepness = 8.0f;
+float distanceSteepness = 10.0f;
 
 float distanceFactor() {
     return pow(distanceSteepness, 2.0f) / pow(cameraDistance + distanceSteepness, 2.0f);

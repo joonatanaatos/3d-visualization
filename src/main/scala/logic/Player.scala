@@ -22,8 +22,10 @@ import scala.collection.mutable.Set
  * @param initialPosition
  *   Initial player position
  */
-class Player(initialPosition: Vector3f) extends KeyListener, CursorListener {
-  private val position = Vector3f(initialPosition)
+class Player(initialPosition: Vector3f)
+    extends GameObject(initialPosition),
+      KeyListener,
+      CursorListener {
   private var direction = (-math.Pi.toFloat, 0f)
 
   private val pressedKeys: Set[Int] = Set()
@@ -31,7 +33,7 @@ class Player(initialPosition: Vector3f) extends KeyListener, CursorListener {
   private val rotationSpeed = 0.0008f
   private val size = 0.2f
 
-  def tick(world: World): Unit = {
+  override def tick(world: World): Unit = {
     val velocity = normalizedVelocity()
     val change = velocity.mul(movementSpeed)
     if world.stage.canBeInPosition((position.x + change.x, position.z), size) then
@@ -59,7 +61,6 @@ class Player(initialPosition: Vector3f) extends KeyListener, CursorListener {
     if velocity.isFinite then velocity else Vector3f().zero()
   }
 
-  def getPosition: Vector3f = Vector3f(position)
   def getDirection: (Float, Float) = direction
 
   override def onKeyPress(key: Int, action: Int): Unit = {
