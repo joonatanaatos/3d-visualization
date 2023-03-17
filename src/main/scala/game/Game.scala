@@ -1,5 +1,6 @@
 package game
 
+import audio.{AudioPlayer, Sound}
 import engine.{EngineInterface, GameInterface}
 import graphics.{Renderer, Window}
 import logic.World
@@ -15,6 +16,7 @@ class Game extends GameInterface {
 
   override def init(engine: EngineInterface): Unit = {
     this.engine = Option(engine)
+    AudioPlayer.loop(Sound.BackgroundMusic)
   }
 
   override def render(): Unit = {
