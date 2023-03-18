@@ -5,6 +5,13 @@ import javax.sound.sampled.{AudioSystem, Clip, FloatControl}
 enum Sound(val name: String) {
   case BackgroundMusic extends Sound("background-music")
 
+  case Step1 extends Sound("steps/step-01")
+  case Step2 extends Sound("steps/step-02")
+  case Step3 extends Sound("steps/step-03")
+  case Step4 extends Sound("steps/step-04")
+  case Step5 extends Sound("steps/step-05")
+  case Step6 extends Sound("steps/step-06")
+
   private val (clip, gainControl) = loadAudio()
 
   private def loadAudio(): (Clip, FloatControl) = {
@@ -22,7 +29,7 @@ enum Sound(val name: String) {
   }
 
   protected[audio] def play(): Unit = {
-    if clip.isActive then this.stop()
+    if clip.isActive || clip.isRunning then this.stop()
     clip.setFramePosition(0)
     clip.start()
   }
@@ -33,7 +40,7 @@ enum Sound(val name: String) {
   }
 
   protected[audio] def loop(): Unit = {
-    if clip.isActive then this.stop()
+    if clip.isActive || clip.isRunning then this.stop()
     clip.setFramePosition(0)
     clip.loop(Clip.LOOP_CONTINUOUSLY)
   }

@@ -1,11 +1,13 @@
 package logic
 
+import audio.AudioPlayer
 import org.joml.{Vector2f, Vector3f}
 import org.lwjgl.glfw.GLFW.{
   GLFW_KEY_A,
   GLFW_KEY_D,
   GLFW_KEY_DOWN,
   GLFW_KEY_LEFT,
+  GLFW_KEY_LEFT_SHIFT,
   GLFW_KEY_RIGHT,
   GLFW_KEY_S,
   GLFW_KEY_UP,
@@ -27,23 +29,31 @@ class Player(initialPosition: Vector3f)
       KeyListener,
       CursorListener {
   private var direction = (-math.Pi.toFloat, 0f)
+  private var velocity = Vector3f()
 
   private val pressedKeys: Set[Int] = Set()
-  private val movementSpeed = 0.03f
+  private val runningSpeed = 0.03f
+  private val walkingSpeed = 0.02f
+  private var movementSpeed = walkingSpeed
   private val rotationSpeed = 0.0008f
   private val size = 0.2f
 
+  private var stepTimer = 0
+  private val stepFactor = 0.7f
+
   override def tick(world: World): Unit = {
-    val velocity = normalizedVelocity()
+    checkInput()
+    velocity = normalizedVelocity()
     val change = velocity.mul(movementSpeed)
     if world.stage.canBeInPosition((position.x + change.x, position.z), size) then
       position.add(Vector3f(change.x, 0f, 0f))
     if world.stage.canBeInPosition((position.x, position.z + change.z), size) then
       position.add(Vector3f(0f, 0f, change.z))
+    updateSounds()
   }
 
   private def normalizedVelocity(): Vector3f = {
-    val velocity = Vector3f().zero()
+    val velocity = Vector3f()
     if pressedKeys.contains(GLFW_KEY_UP) || pressedKeys.contains(GLFW_KEY_W) then {
       velocity.z -= 1
     }
@@ -58,7 +68,30 @@ class Player(initialPosition: Vector3f)
     }
     velocity.rotateY(-direction(0))
     velocity.normalize()
-    if velocity.isFinite then velocity else Vector3f().zero()
+    if velocity.isFinite then velocity else Vector3f()
+  }
+
+  private def checkInput(): Unit = {
+    if pressedKeys.contains(GLFW_KEY_LEFT_SHIFT) then {
+      movementSpeed = runningSpeed
+    } else {
+      movementSpeed = walkingSpeed
+    }
+  }
+
+  private def updateSounds(): Unit = {
+    if velocity.length() != 0 then {
+      val stepTime = (stepFactor / movementSpeed).toInt
+      if stepTimer == 0 then {
+        stepTimer = stepTime
+        AudioPlayer.playRandom(AudioPlayer.stepSounds)
+      } else {
+        stepTimer = math.min(stepTimer - 1, stepTime)
+      }
+    } else if stepTimer != 0 then {
+      AudioPlayer.stop(AudioPlayer.stepSounds)
+      stepTimer = 0
+    }
   }
 
   def getDirection: (Float, Float) = direction
