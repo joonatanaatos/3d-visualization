@@ -16,7 +16,6 @@ class World(val addEventListener: EventListener => Unit) {
 
   private val scareTime = 60
   private var scareTimer = 0
-  private var scareCause: Option[Demon] = None
 
   private val spawnPoint = stage.getSpawnPoint
 
@@ -45,21 +44,30 @@ class World(val addEventListener: EventListener => Unit) {
     gameObjects = gameObjects.filter(!_.isDead)
   }
 
+  private def createNewDemon(): Demon = {
+    val playerPos = player.getPosition
+    val spawnPositions = stage.getAllAvailablePositions.filter(pos => {
+      val distance = Vector3f(pos(0).toFloat + 0.5f, 0f, pos(1).toFloat + 0.5f).distance(playerPos)
+      distance > Demon.attackThreshold + 5
+    })
+    val spawnPosition = spawnPositions((Math.random() * spawnPositions.length).toInt)
+    new Demon(Vector3f(spawnPosition(0).toFloat + 0.5f, 0f, spawnPosition(1).toFloat + 0.5f))
+  }
+
   private def updateTimers(): Unit = {
     if (scareTimer > 0) {
       scareTimer -= 1
-      if (scareTimer == 0) {
-        scareCause = None
+      if scareTimer == 0 then {
+        gameObjects += createNewDemon()
       }
     }
   }
 
-  def startScare(demon: Demon): Unit = {
+  def startScare(): Unit = {
     scareTimer = scareTime
-    scareCause = Option(demon)
   }
 
   def getGameObjects: Array[GameObject] = gameObjects.toArray
 
-  def getScareStatus: (Option[Demon], Int) = (scareCause, scareTimer)
+  def getScareStatus: Int = scareTimer
 }

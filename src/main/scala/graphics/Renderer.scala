@@ -43,8 +43,8 @@ class Renderer(val world: World, val window: Window) {
     visibleWalls().foreach(drawWall)
     world.getGameObjects.foreach(drawGameObject)
 
-    val (scareCause, scareTimer) = world.getScareStatus
-    if scareCause.isDefined then drawScare(scareCause.get, scareTimer)
+    val scareTimer = world.getScareStatus
+    if scareTimer != 0 then drawScare(scareTimer)
   }
 
   private def visibleWalls(): Array[Wall] = {
@@ -171,7 +171,7 @@ class Renderer(val world: World, val window: Window) {
     }
   }
 
-  private def drawScare(demon: Demon, scareTimer: Int): Unit = {
+  private def drawScare(scareTimer: Int): Unit = {
     val modelMatrix = Matrix4f()
     modelMatrix.translate(0f, -0.2f, 0f)
     modelMatrix.scale(1.6f - (scareTimer / 200f))
@@ -188,7 +188,7 @@ class Renderer(val world: World, val window: Window) {
   }
 
   private def updateLighting(): Unit = {
-    renderingHelper.setAmbientLightBrightness(0.04f)
+    renderingHelper.setAmbientLightBrightness(0.02f)
     renderingHelper.setPointLights(
       world.lights
         .map(light => (light.getPosition.sub(cameraPosition), light.getBrightness))

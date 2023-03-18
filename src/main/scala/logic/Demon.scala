@@ -31,7 +31,7 @@ class Demon(initialPosition: Vector3f) extends GameObject(initialPosition) {
     if distance < attackThreshold then move(world)
     if distance < scareThreshold then {
       isDead = true
-      world.startScare(this)
+      world.startScare()
     }
   }
 

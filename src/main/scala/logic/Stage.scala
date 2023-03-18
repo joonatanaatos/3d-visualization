@@ -36,6 +36,18 @@ class Stage {
   def getWallPositions: (Array[Array[Option[Wall]]], Array[Array[Option[Wall]]]) =
     (horizontalWalls, verticalWalls)
 
+  def getAllAvailablePositions: Array[(Int, Int)] = {
+    val positions = ArrayBuffer[(Int, Int)]()
+    for (y <- 0 until height) {
+      for (x <- 0 until width) {
+        if stageGrid(y)(x) != "X" then {
+          positions += ((x, y))
+        }
+      }
+    }
+    positions.toArray
+  }
+
   def getLightPositions: Array[(Int, Int, Boolean)] = lightPositions
 
   def getDemonPositions: Array[(Int, Int)] = demonPositions
