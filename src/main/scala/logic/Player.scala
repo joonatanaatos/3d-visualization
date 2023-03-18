@@ -29,6 +29,7 @@ class Player(initialPosition: Vector3f)
       KeyListener,
       CursorListener {
   private var direction = (-math.Pi.toFloat, 0f)
+  private var normalizedVelocity = Vector3f()
   private var velocity = Vector3f()
 
   private val pressedKeys: Set[Int] = Set()
@@ -40,19 +41,26 @@ class Player(initialPosition: Vector3f)
 
   private var stepTimer = 0
   private val stepFactor = 0.7f
+  private val stepThreshold = 0.001f
 
   override def tick(world: World): Unit = {
     checkInput()
-    velocity = normalizedVelocity()
-    val change = velocity.mul(movementSpeed)
+    move(world)
+    updateSounds()
+  }
+
+  private def move(world: World): Unit = {
+    normalizedVelocity = getNormalizedVelocity
+    val previousPosition = Vector3f(position)
+    val change = normalizedVelocity.mul(movementSpeed)
     if world.stage.canBeInPosition((position.x + change.x, position.z), size) then
       position.add(Vector3f(change.x, 0f, 0f))
     if world.stage.canBeInPosition((position.x, position.z + change.z), size) then
       position.add(Vector3f(0f, 0f, change.z))
-    updateSounds()
+    velocity = Vector3f(position).sub(previousPosition)
   }
 
-  private def normalizedVelocity(): Vector3f = {
+  private def getNormalizedVelocity: Vector3f = {
     val velocity = Vector3f()
     if pressedKeys.contains(GLFW_KEY_UP) || pressedKeys.contains(GLFW_KEY_W) then {
       velocity.z -= 1
@@ -80,8 +88,9 @@ class Player(initialPosition: Vector3f)
   }
 
   private def updateSounds(): Unit = {
-    if velocity.length() != 0 then {
-      val stepTime = (stepFactor / movementSpeed).toInt
+    val currentVelocity = velocity.length()
+    if currentVelocity > stepThreshold then {
+      val stepTime = (stepFactor / currentVelocity).toInt
       if stepTimer == 0 then {
         stepTimer = stepTime
         AudioPlayer.playRandom(AudioPlayer.stepSounds)
