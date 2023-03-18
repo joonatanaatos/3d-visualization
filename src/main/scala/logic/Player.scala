@@ -39,6 +39,9 @@ class Player(initialPosition: Vector3f)
   private val rotationSpeed = 0.0008f
   private val size = 0.2f
 
+  private var viewChange = 0f // Between 0 and 2 pi
+  private val viewChangeSpeed = 7.5f
+
   private var stepTimer = 0
   private val stepFactor = 0.7f
   private val stepThreshold = 0.001f
@@ -46,6 +49,7 @@ class Player(initialPosition: Vector3f)
   override def tick(world: World): Unit = {
     checkInput()
     move(world)
+    updateViewBobbing()
     updateSounds()
   }
 
@@ -87,6 +91,15 @@ class Player(initialPosition: Vector3f)
     }
   }
 
+  private def updateViewBobbing(): Unit = {
+    val currentVelocity = velocity.length()
+    if currentVelocity != 0 then {
+      viewChange = (viewChange + viewChangeSpeed * currentVelocity) % (2f * math.Pi.toFloat)
+    } else {
+      viewChange = 0f
+    }
+  }
+
   private def updateSounds(): Unit = {
     val currentVelocity = velocity.length()
     if currentVelocity > stepThreshold then {
@@ -104,6 +117,8 @@ class Player(initialPosition: Vector3f)
   }
 
   def getDirection: (Float, Float) = direction
+
+  def getViewChange: Float = viewChange
 
   override def onKeyPress(key: Int, action: Int): Unit = {
     action match {

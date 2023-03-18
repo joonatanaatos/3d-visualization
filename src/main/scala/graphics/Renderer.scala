@@ -17,6 +17,7 @@ class Renderer(val world: World, val window: Window) {
   private val cameraRelativeToPlayer = Vector3f(0f, 0.4f, 0f)
   private var cameraPosition = Vector3f(cameraRelativeToPlayer)
   private var cameraDirection = (0f, 0f)
+  private var viewChange = (0f, 0f)
 
   private val wallHeight = world.wallHeight
   private val wallShapeMatrix =
@@ -35,6 +36,7 @@ class Renderer(val world: World, val window: Window) {
     updateCameraPosition()
     updateLighting()
     renderingHelper.clear()
+    viewChange = calculateCameraShake()
 
     // Begin draw
     drawFloorAndCeiling(world.stage.width, world.stage.height)
@@ -63,6 +65,26 @@ class Renderer(val world: World, val window: Window) {
     (horizontalWalls ++ verticalWalls).flatten.filter(isVisible).map(w => w.get)
   }
 
+  private def createModelMatrix(
+      position: Vector3f,
+      rotation: Float,
+      shapeMatrix: Matrix4f,
+  ): Matrix4f = {
+    val modelMatrix = Matrix4f()
+    // 3. Translate + view bobbing
+    modelMatrix.translate(position)
+    // 2. Rotate
+    modelMatrix.rotateY(rotation)
+    // 1. Scale
+    modelMatrix.mul(shapeMatrix)
+    modelMatrix
+  }
+
+  private def calculateCameraShake(): (Float, Float) = {
+    val viewBobbing = math.sin(world.player.getViewChange).toFloat / 75f
+    (0f, viewBobbing)
+  }
+
   private def drawWall(wall: Wall): Unit = {
     // Calculate wall pos
     val wallPos = Vector3f(wall.xPos.toFloat, 0f, wall.zPos.toFloat)
@@ -73,18 +95,14 @@ class Renderer(val world: World, val window: Window) {
     // Calculate wall angle
     val angle = wall.direction.angle + math.Pi.toFloat / 2f
     val normal = Vector3f(1f, 0f, 0f).rotateY(wall.direction.angle).normalize()
-
-    // 1. Scale, 2. Rotate, 3. Translate
-    val modelMatrix = Matrix4f()
-    modelMatrix.translate(wallPos)
-    modelMatrix.rotateY(angle)
-    modelMatrix.mul(wallShapeMatrix)
+    val modelMatrix = createModelMatrix(wallPos, angle, wallShapeMatrix)
 
     renderingHelper.drawTexture(
       modelMatrix,
       cameraDirection,
       wallTexture,
       normal,
+      viewChange,
     )
   }
 
@@ -102,16 +120,15 @@ class Renderer(val world: World, val window: Window) {
 
     demonPos.sub(cameraPosition)
 
-    val modelMatrix = Matrix4f()
-    modelMatrix.translate(demonPos)
-    modelMatrix.rotateY(angle)
-    modelMatrix.mul(creatureShapeMatrix(demon.size, demon.height))
+    val modelMatrix =
+      createModelMatrix(demonPos, angle, creatureShapeMatrix(demon.size, demon.height))
 
     renderingHelper.drawTexture(
       modelMatrix,
       cameraDirection,
       demonTexture,
       normal,
+      viewChange,
     )
   }
 
@@ -122,16 +139,14 @@ class Renderer(val world: World, val window: Window) {
     for (x <- 0 until width) {
       for (z <- 0 until depth) {
         for (y <- Array(0f, wallHeight)) {
-          val modelMatrix = Matrix4f()
-          modelMatrix.translate(position)
-          modelMatrix.translate(x, y, z)
-          modelMatrix.mul(floorShapeMatrix)
+          val modelMatrix = createModelMatrix(Vector3f(position).add(x, y, z), 0f, floorShapeMatrix)
 
           renderingHelper.drawTexture(
             modelMatrix,
             cameraDirection,
             floorTexture,
             Vector3f(0f, if y == 0f then 1f else -1f, 0f),
+            viewChange,
           )
         }
       }

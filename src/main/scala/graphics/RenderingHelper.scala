@@ -36,6 +36,7 @@ import org.lwjgl.opengl.GL20.{
   glGetAttribLocation,
   glUniform1f,
   glUniform1i,
+  glUniform2fv,
   glUniform3fv,
   glUniform4fv,
   glUniformMatrix4fv,
@@ -92,6 +93,7 @@ class RenderingHelper(val window: Window) {
       Array(
         "mvMatrix",
         "pMatrix",
+        "translate",
         "texture",
         "normal",
         "ambientLightBrightness",
@@ -255,6 +257,7 @@ class RenderingHelper(val window: Window) {
       viewDirection: (Float, Float) = (0f, 0f),
       texture: Texture,
       normal: Vector3f,
+      translate: (Float, Float) = (0f, 0f),
   ): Unit = {
     // Bind correct VAO and shader program
     glCheck { textureShaderProgram.bind() }
@@ -296,6 +299,9 @@ class RenderingHelper(val window: Window) {
     }
     glCheck {
       glUniform1i(textureShaderProgram.uniform("texture"), 0)
+    }
+    glCheck {
+      glUniform2fv(textureShaderProgram.uniform("translate"), Array(translate(0), translate(1)))
     }
     glCheck {
       glUniform1f(textureShaderProgram.uniform("ambientLightBrightness"), ambientLightBrightness)
