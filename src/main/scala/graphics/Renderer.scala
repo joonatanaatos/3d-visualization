@@ -36,7 +36,7 @@ class Renderer(val world: World, val window: Window) {
     updateCameraPosition()
     updateLighting()
     renderingHelper.clear()
-    viewChange = calculateCameraShake()
+    viewChange = getCameraShake
 
     // Begin draw
     drawFloorAndCeiling(world.stage.width, world.stage.height)
@@ -80,9 +80,27 @@ class Renderer(val world: World, val window: Window) {
     modelMatrix
   }
 
-  private def calculateCameraShake(): (Float, Float) = {
+  private def getDistanceFromDemon: Float = {
+    val playerPos = world.player.getPosition
+    val demons = world.getGameObjects.filter(_.isInstanceOf[Demon]).map(_.asInstanceOf[Demon])
+    if demons.isEmpty then return Float.MaxValue
+    val demonPositions = demons.map(_.getPosition)
+    val distances = demonPositions.map(pos => pos.sub(playerPos).length())
+    distances.min
+  }
+
+  private def getDemonEffectIntensity: Float = {
+    val distanceFromDemon = getDistanceFromDemon
+    if distanceFromDemon < Demon.attackThreshold then {
+      0.5f / (1 + distanceFromDemon * distanceFromDemon)
+    } else 0f
+  }
+
+  private def getCameraShake: (Float, Float) = {
+    val demonIntensity = getDemonEffectIntensity
+    val demonShake = (0 until 2).map(_ => (math.random().toFloat - 0.5f) * demonIntensity).toArray
     val viewBobbing = math.sin(world.player.getViewChange).toFloat / 75f
-    (0f, viewBobbing)
+    (demonShake(0), demonShake(1) + viewBobbing)
   }
 
   private def drawWall(wall: Wall): Unit = {
@@ -121,7 +139,7 @@ class Renderer(val world: World, val window: Window) {
     demonPos.sub(cameraPosition)
 
     val modelMatrix =
-      createModelMatrix(demonPos, angle, creatureShapeMatrix(demon.size, demon.height))
+      createModelMatrix(demonPos, angle, creatureShapeMatrix(Demon.drawSize, demon.height))
 
     renderingHelper.drawTexture(
       modelMatrix,
@@ -157,9 +175,10 @@ class Renderer(val world: World, val window: Window) {
     val modelMatrix = Matrix4f()
     modelMatrix.translate(0f, -0.2f, 0f)
     modelMatrix.scale(1.6f - (scareTimer / 200f))
-    modelMatrix.scaleXY(demon.size, window.getAspectRatio)
+    modelMatrix.scaleXY(Demon.drawSize, window.getAspectRatio)
+    val shake = (0 until 2).map(_ => (math.random().toFloat - 0.5f) * 0.4f)
 
-    renderingHelper.drawImage(modelMatrix, demonTexture)
+    renderingHelper.drawImage(modelMatrix, demonTexture, (shake(0), shake(1)))
   }
 
   private def updateViewport(): Unit = {

@@ -85,7 +85,7 @@ class RenderingHelper(val window: Window) {
     ShaderProgram("quadrilateral", Array("mvpMatrix", "color"))
 
   private val imageShaderProgram =
-    ShaderProgram("image", Array("modelMatrix", "texture", "invertColor"))
+    ShaderProgram("image", Array("modelMatrix", "texture", "translate", "invertColor"))
 
   private val textureShaderProgram =
     ShaderProgram(
@@ -347,6 +347,7 @@ class RenderingHelper(val window: Window) {
   def drawImage(
       modelMatrix: Matrix4f = Matrix4f(),
       texture: Texture,
+      translate: (Float, Float) = (0f, 0f),
   ): Unit = {
     // Bind correct VAO and shader program
     glCheck { imageShaderProgram.bind() }
@@ -363,11 +364,12 @@ class RenderingHelper(val window: Window) {
         matrixToArray(modelMatrix),
       )
     }
-
+    glCheck {
+      glUniform2fv(imageShaderProgram.uniform("translate"), Array(translate(0), translate(1)))
+    }
     glCheck {
       glUniform1i(imageShaderProgram.uniform("invertColor"), 1)
     }
-
     glCheck {
       glUniform1i(imageShaderProgram.uniform("texture"), 0)
     }

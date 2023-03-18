@@ -2,12 +2,17 @@ package logic
 
 import org.joml.Vector3f
 
+object Demon {
+  val attackThreshold = 10f
+  val drawSize = 0.75f
+}
+
 class Demon(initialPosition: Vector3f) extends GameObject(initialPosition) {
   val height = 0.6f
-  val size = 0.75f
-  private val movementSpeed = 0.2f
+  val size = 0.3f
+  private val movementSpeed = 0.05f
   private var direction = 0f
-  private val attackThreshold = 8f
+  private val attackThreshold = Demon.attackThreshold
   private val scareThreshold = 0.5f
 
   private def move(world: World): Unit = {
