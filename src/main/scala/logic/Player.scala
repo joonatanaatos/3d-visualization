@@ -24,11 +24,12 @@ import scala.collection.mutable.Set
  * @param initialPosition
  *   Initial player position
  */
-class Player(initialPosition: Vector3f)
-    extends GameObject(initialPosition),
+class Player(world: World, initialPosition: Vector3f)
+    extends GameObject(world, initialPosition),
       KeyListener,
       CursorListener {
-  private var direction = (-math.Pi.toFloat, 0f)
+  private var direction = Vector2f(-math.Pi.toFloat, 0f)
+  private var directionChange = Vector2f()
   private var normalizedVelocity = Vector3f()
   private var velocity = Vector3f()
 
@@ -36,7 +37,7 @@ class Player(initialPosition: Vector3f)
   private val runningSpeed = 0.03f
   private val walkingSpeed = 0.02f
   private var movementSpeed = walkingSpeed
-  private val rotationSpeed = 0.0008f
+  private val rotationSpeed = 0.0004f
   private val size = 0.2f
 
   private var viewChange = 0f // Between 0 and 2 pi
@@ -46,14 +47,14 @@ class Player(initialPosition: Vector3f)
   private val stepFactor = 0.7f
   private val stepThreshold = 0.001f
 
-  override def tick(world: World): Unit = {
-    checkInput()
-    move(world)
+  override def tick(): Unit = {
+    captureInput()
+    move()
     updateViewBobbing()
     updateSounds()
   }
 
-  private def move(world: World): Unit = {
+  private def move(): Unit = {
     normalizedVelocity = getNormalizedVelocity
     val previousPosition = Vector3f(position)
     val change = normalizedVelocity.mul(movementSpeed)
@@ -78,17 +79,26 @@ class Player(initialPosition: Vector3f)
     if pressedKeys.contains(GLFW_KEY_LEFT) || pressedKeys.contains(GLFW_KEY_A) then {
       velocity.x -= 1
     }
-    velocity.rotateY(-direction(0))
+    velocity.rotateY(-direction.x)
     velocity.normalize()
     if velocity.isFinite then velocity else Vector3f()
   }
 
-  private def checkInput(): Unit = {
+  private def captureInput(): Unit = {
     if pressedKeys.contains(GLFW_KEY_LEFT_SHIFT) then {
       movementSpeed = runningSpeed
     } else {
       movementSpeed = walkingSpeed
     }
+
+    val newDirection = Vector2f(directionChange)
+    newDirection.mul(rotationSpeed)
+    newDirection.add(direction)
+    direction = Vector2f(
+      newDirection.x % (2f * math.Pi.toFloat),
+      math.max(math.min(newDirection.y, math.Pi.toFloat / 2f), -math.Pi.toFloat / 2f),
+    )
+    directionChange = Vector2f()
   }
 
   private def updateViewBobbing(): Unit = {
@@ -116,7 +126,7 @@ class Player(initialPosition: Vector3f)
     }
   }
 
-  def getDirection: (Float, Float) = direction
+  def getDirection: Vector2f = direction
 
   def getViewChange: Float = viewChange
 
@@ -130,12 +140,7 @@ class Player(initialPosition: Vector3f)
     }
   }
 
-  override def onCursorMove(difference: (Float, Float)): Unit = {
-    val xDir = direction(0) + difference(0) * rotationSpeed
-    val yDir = direction(1) + difference(1) * rotationSpeed
-    direction = (
-      xDir % (2f * math.Pi.toFloat),
-      math.max(math.min(yDir, math.Pi.toFloat / 2f), -math.Pi.toFloat / 2f),
-    )
+  override def onCursorMove(difference: Vector2f): Unit = {
+    if world.hasStarted then directionChange.add(difference)
   }
 }

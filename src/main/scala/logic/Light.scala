@@ -3,10 +3,11 @@ package logic
 import org.joml.Vector3f
 
 class Light(
+    world: World,
     initialPosition: Vector3f,
     private var brightness: Float,
     flicker: Boolean = false,
-) extends GameObject(initialPosition) {
+) extends GameObject(world, initialPosition) {
   private val maxBrightness = brightness
   private val minBrightness = 0.1f
   private val flickerTime = 10
@@ -14,7 +15,7 @@ class Light(
   private var flickerTimer = 0
   private var timeSinceLastFlicker = 0
 
-  override def tick(world: World): Unit = {
+  override def tick(): Unit = {
     if flicker then updateFlicker()
   }
 

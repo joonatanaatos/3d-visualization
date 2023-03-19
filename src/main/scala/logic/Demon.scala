@@ -8,7 +8,7 @@ object Demon {
   val drawSize = 0.75f
 }
 
-class Demon(initialPosition: Vector3f) extends GameObject(initialPosition) {
+class Demon(world: World, initialPosition: Vector3f) extends GameObject(world, initialPosition) {
   val height = 0.6f
   val size = 0.3f
   private val movementSpeed = 0.05f
@@ -17,13 +17,13 @@ class Demon(initialPosition: Vector3f) extends GameObject(initialPosition) {
   private val scareThreshold = 0.5f
   private var distanceFromPlayer = Float.MaxValue
 
-  override def tick(world: World): Unit = {
+  override def tick(): Unit = {
     val playerPos = world.player.getPosition
     val difference = playerPos.sub(position)
     direction = -difference.angleSigned(Vector3f(0f, 0f, 1f), Vector3f(0f, 1f, 0f))
     distanceFromPlayer = difference.length
     if distanceFromPlayer < attackThreshold then {
-      move(world)
+      move()
     }
     if distanceFromPlayer < scareThreshold then {
       isDead = true
@@ -38,7 +38,7 @@ class Demon(initialPosition: Vector3f) extends GameObject(initialPosition) {
     }
   }
 
-  private def move(world: World): Unit = {
+  private def move(): Unit = {
     val change = Vector3f(0f, 0f, movementSpeed).rotateY(direction)
     if world.stage.canBeInPosition((position.x + change.x, position.z), size) then
       position.add(Vector3f(change.x, 0f, 0f))

@@ -32,19 +32,25 @@ import scala.collection.immutable
  * from the /glsl directory and then compiles the shader. The ShaderProgram class also provides an
  * interface for setting uniform variables but not vertex attributes.
  *
- * @param shaderName
- *   Name of the shader
+ * @param vertexName
+ *   Name of the vertex shader
+ * @param fragmentName
+ *   Name of the fragment shader
  * @param uniformNames
  *   List of uniforms used in the shader
  */
-class ShaderProgram(val shaderName: String, val uniformNames: Array[String]) {
+class ShaderProgram(
+    val vertexName: String,
+    val fragmentName: String,
+    val uniformNames: Array[String],
+) {
   private val programHandle = glCheck { glCreateProgram() }
   if programHandle == 0 then {
-    throw new RuntimeException(s"Failed to create program for \"$shaderName\"")
+    throw new RuntimeException(s"Failed to create program for \"$vertexName\"")
   }
 
-  private val vertexShaderCode = Files.readString(Paths.get(s"src/main/glsl/$shaderName.vert"))
-  private val fragmentShaderCode = Files.readString(Paths.get(s"src/main/glsl/$shaderName.frag"))
+  private val vertexShaderCode = Files.readString(Paths.get(s"src/main/glsl/$vertexName.vert"))
+  private val fragmentShaderCode = Files.readString(Paths.get(s"src/main/glsl/$fragmentName.frag"))
 
   private val vertexShaderHandle = createShader(vertexShaderCode, GL_VERTEX_SHADER)
   private val fragmentShaderHandle = createShader(fragmentShaderCode, GL_FRAGMENT_SHADER)
@@ -57,7 +63,7 @@ class ShaderProgram(val shaderName: String, val uniformNames: Array[String]) {
     // Create shader
     val shaderHandle = glCheck { glCreateShader(shaderType) }
     if shaderHandle == 0 then {
-      throw new RuntimeException(s"Failed to create shader for \"$shaderName\"")
+      throw new RuntimeException(s"Failed to create shader for \"$vertexName\"")
     }
     // Load and compile shader code
     glCheck { glShaderSource(shaderHandle, shaderCode) }

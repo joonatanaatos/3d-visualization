@@ -81,20 +81,43 @@ class RenderingHelper(val window: Window) {
   this.init()
   this.logOpenGLState()
 
-  private val quadrilateralShaderProgram =
-    ShaderProgram("quadrilateral", Array("mvpMatrix", "color"))
-
-  private val imageShaderProgram =
-    ShaderProgram("image", Array("modelMatrix", "texture", "translate", "invertColor"))
-
-  private val textureShaderProgram =
+  private val texture2DShaderProgram =
     ShaderProgram(
-      "texture",
+      "2d",
+      "2d-texture",
+      Array("modelMatrix", "texture", "translate", "opacity", "invertColor"),
+    )
+
+  private val color2DShaderProgram =
+    ShaderProgram(
+      "2d",
+      "2d-color",
+      Array("modelMatrix", "color", "translate", "opacity", "invertColor"),
+    )
+
+  private val texture3DShaderProgram =
+    ShaderProgram(
+      "3d",
+      "3d-texture",
       Array(
         "mvMatrix",
         "pMatrix",
         "translate",
         "texture",
+        "normal",
+        "ambientLightBrightness",
+      ),
+    )
+
+  private val color3DShaderProgram =
+    ShaderProgram(
+      "3d",
+      "3d-color",
+      Array(
+        "mvMatrix",
+        "pMatrix",
+        "translate",
+        "color",
         "normal",
         "ambientLightBrightness",
       ),
@@ -171,8 +194,8 @@ class RenderingHelper(val window: Window) {
     Array(vector.x, vector.y, vector.z)
   }
 
-  private def createViewMatrix(viewDirection: (Float, Float)): Matrix4f = {
-    Matrix4f().rotateX(viewDirection(1)).rotateY(viewDirection(0))
+  private def createViewMatrix(viewDirection: Vector2f): Matrix4f = {
+    Matrix4f().rotateX(viewDirection.y).rotateY(viewDirection.x)
   }
 
   private def createProjectionMatrix(): Matrix4f = {
@@ -182,63 +205,6 @@ class RenderingHelper(val window: Window) {
       0.1f,
       Float.PositiveInfinity,
     )
-  }
-
-  private def createMvpMatrix(
-      modelMatrix: Matrix4f,
-      viewDirection: (Float, Float),
-  ): Array[Float] = {
-    val mvpMatrix = Matrix4f()
-    // Perspective
-    mvpMatrix.setPerspective(
-      math.Pi.toFloat / 3f,
-      window.getAspectRatio,
-      0.1f,
-      Float.PositiveInfinity,
-    )
-    // View
-    mvpMatrix.rotateX(viewDirection(1))
-    mvpMatrix.rotateY(viewDirection(0))
-    // Model
-    mvpMatrix.mul(modelMatrix)
-    // Transfer matrix into array
-    val mvpMatrixArray = Array.fill[Float](16)(0)
-    mvpMatrix.get(mvpMatrixArray)
-    mvpMatrixArray
-  }
-
-  def drawQuadrilateral(
-      modelMatrix: Matrix4f = Matrix4f(),
-      viewDirection: (Float, Float) = (0f, 0f),
-      color: Array[Float] = Array(1f, 1f, 1f, 1f),
-  ): Unit = {
-    // Bind correct VAO and shader program
-    glCheck { quadrilateralShaderProgram.bind() }
-    glCheck { glBindVertexArray(quadrilateralVaoHandle) }
-    glCheck { glEnableVertexAttribArray(vertexPosIndex) }
-
-    // Create MVP matrix
-    val mvpMatrix = createMvpMatrix(modelMatrix, viewDirection)
-
-    // Set uniforms
-    glCheck {
-      glUniformMatrix4fv(
-        quadrilateralShaderProgram.uniform("mvpMatrix"),
-        false,
-        mvpMatrix,
-      )
-    }
-    glCheck {
-      glUniform4fv(quadrilateralShaderProgram.uniform("color"), color)
-    }
-
-    // Draw vertices
-    glCheck { glDrawArrays(GL_TRIANGLE_STRIP, 0, 4) }
-
-    // Unbind everything and restore state
-    glCheck { glDisableVertexAttribArray(vertexPosIndex) }
-    glCheck { glBindVertexArray(0) }
-    glCheck { quadrilateralShaderProgram.unbind() }
   }
 
   /**
@@ -252,15 +218,15 @@ class RenderingHelper(val window: Window) {
    * @param normal
    *   normal vector
    */
-  def drawTexture(
+  def drawTexture3D(
       modelMatrix: Matrix4f = Matrix4f(),
-      viewDirection: (Float, Float) = (0f, 0f),
+      viewDirection: Vector2f = Vector2f(),
       texture: Texture,
       normal: Vector3f,
-      translate: (Float, Float) = (0f, 0f),
+      translate: Vector2f = Vector2f(),
   ): Unit = {
     // Bind correct VAO and shader program
-    glCheck { textureShaderProgram.bind() }
+    glCheck { texture3DShaderProgram.bind() }
     glCheck { glBindVertexArray(quadrilateralVaoHandle) }
     glCheck { glEnableVertexAttribArray(vertexPosIndex) }
     glCheck { glEnableVertexAttribArray(textureCoordIndex) }
@@ -279,43 +245,43 @@ class RenderingHelper(val window: Window) {
     // Set uniforms
     glCheck {
       glUniformMatrix4fv(
-        textureShaderProgram.uniform("mvMatrix"),
+        texture3DShaderProgram.uniform("mvMatrix"),
         false,
         matrixToArray(Matrix4f(viewMatrix).mul(modelMatrix)),
       )
     }
     glCheck {
       glUniformMatrix4fv(
-        textureShaderProgram.uniform("pMatrix"),
+        texture3DShaderProgram.uniform("pMatrix"),
         false,
         matrixToArray(projectionMatrix),
       )
     }
     glCheck {
       glUniform3fv(
-        textureShaderProgram.uniform("normal"),
+        texture3DShaderProgram.uniform("normal"),
         vectorToArray(applyViewMatrix(normal)),
       )
     }
     glCheck {
-      glUniform1i(textureShaderProgram.uniform("texture"), 0)
+      glUniform1i(texture3DShaderProgram.uniform("texture"), 0)
     }
     glCheck {
-      glUniform2fv(textureShaderProgram.uniform("translate"), Array(translate(0), translate(1)))
+      glUniform2fv(texture3DShaderProgram.uniform("translate"), Array(translate.x, translate.y))
     }
     glCheck {
-      glUniform1f(textureShaderProgram.uniform("ambientLightBrightness"), ambientLightBrightness)
+      glUniform1f(texture3DShaderProgram.uniform("ambientLightBrightness"), ambientLightBrightness)
     }
     for (i <- 0 until math.min(pointLights.length, maxNumberOfLights)) {
       glCheck {
         glUniform3fv(
-          textureShaderProgram.dynamicUniform(s"pointLights[$i].position"),
+          texture3DShaderProgram.dynamicUniform(s"pointLights[$i].position"),
           vectorToArray(lightPositions(i)),
         )
       }
       glCheck {
         glUniform1f(
-          textureShaderProgram.dynamicUniform(s"pointLights[$i].brightness"),
+          texture3DShaderProgram.dynamicUniform(s"pointLights[$i].brightness"),
           pointLights(i)(1),
         )
       }
@@ -334,7 +300,7 @@ class RenderingHelper(val window: Window) {
     glCheck { glDisableVertexAttribArray(vertexPosIndex) }
     glCheck { glDisableVertexAttribArray(textureCoordIndex) }
     glCheck { glBindVertexArray(0) }
-    glCheck { textureShaderProgram.unbind() }
+    glCheck { texture3DShaderProgram.unbind() }
   }
 
   /**
@@ -344,13 +310,15 @@ class RenderingHelper(val window: Window) {
    * @param texture
    *   texture object
    */
-  def drawImage(
+  def drawTexture2D(
       modelMatrix: Matrix4f = Matrix4f(),
       texture: Texture,
-      translate: (Float, Float) = (0f, 0f),
+      translate: Vector2f = Vector2f(),
+      invertColor: Boolean = false,
+      opacity: Float = 1f,
   ): Unit = {
     // Bind correct VAO and shader program
-    glCheck { imageShaderProgram.bind() }
+    glCheck { texture2DShaderProgram.bind() }
     glCheck { glBindVertexArray(quadrilateralVaoHandle) }
     glCheck { glEnableVertexAttribArray(vertexPosIndex) }
     glCheck { glEnableVertexAttribArray(textureCoordIndex) }
@@ -359,19 +327,22 @@ class RenderingHelper(val window: Window) {
 
     glCheck {
       glUniformMatrix4fv(
-        imageShaderProgram.uniform("modelMatrix"),
+        texture2DShaderProgram.uniform("modelMatrix"),
         false,
         matrixToArray(modelMatrix),
       )
     }
     glCheck {
-      glUniform2fv(imageShaderProgram.uniform("translate"), Array(translate(0), translate(1)))
+      glUniform2fv(texture2DShaderProgram.uniform("translate"), Array(translate.x, translate.y))
     }
     glCheck {
-      glUniform1i(imageShaderProgram.uniform("invertColor"), 1)
+      glUniform1i(texture2DShaderProgram.uniform("invertColor"), if invertColor then 1 else 0)
     }
     glCheck {
-      glUniform1i(imageShaderProgram.uniform("texture"), 0)
+      glUniform1f(texture2DShaderProgram.uniform("opacity"), opacity)
+    }
+    glCheck {
+      glUniform1i(texture2DShaderProgram.uniform("texture"), 0)
     }
 
     // Bind texture
@@ -387,7 +358,52 @@ class RenderingHelper(val window: Window) {
     glCheck { glDisableVertexAttribArray(vertexPosIndex) }
     glCheck { glDisableVertexAttribArray(textureCoordIndex) }
     glCheck { glBindVertexArray(0) }
-    glCheck { imageShaderProgram.unbind() }
+    glCheck { texture2DShaderProgram.unbind() }
+  }
+
+  def drawColor2D(
+      modelMatrix: Matrix4f = Matrix4f(),
+      color: Array[Float],
+      translate: Vector2f = Vector2f(),
+      invertColor: Boolean = false,
+      opacity: Float = 1f,
+  ): Unit = {
+    // Bind correct VAO and shader program
+    glCheck { color2DShaderProgram.bind() }
+    glCheck { glBindVertexArray(quadrilateralVaoHandle) }
+    glCheck { glEnableVertexAttribArray(vertexPosIndex) }
+    glCheck { glEnableVertexAttribArray(textureCoordIndex) }
+
+    modelMatrix.translate(0f, 0f, -0.5f)
+
+    glCheck {
+      glUniformMatrix4fv(
+        color2DShaderProgram.uniform("modelMatrix"),
+        false,
+        matrixToArray(modelMatrix),
+      )
+    }
+    glCheck {
+      glUniform2fv(color2DShaderProgram.uniform("translate"), Array(translate.x, translate.y))
+    }
+    glCheck {
+      glUniform1i(color2DShaderProgram.uniform("invertColor"), if invertColor then 1 else 0)
+    }
+    glCheck {
+      glUniform1f(color2DShaderProgram.uniform("opacity"), opacity)
+    }
+    glCheck {
+      glUniform4fv(color2DShaderProgram.uniform("color"), color.take(4))
+    }
+
+    // Draw vertices
+    glCheck { glDrawArrays(GL_TRIANGLE_STRIP, 0, 4) }
+
+    // Unbind everything and restore state
+    glCheck { glDisableVertexAttribArray(vertexPosIndex) }
+    glCheck { glDisableVertexAttribArray(textureCoordIndex) }
+    glCheck { glBindVertexArray(0) }
+    glCheck { color2DShaderProgram.unbind() }
   }
 
   def clear(): Unit = {
@@ -405,7 +421,13 @@ class RenderingHelper(val window: Window) {
   }
 
   def destroy(): Unit = {
-    quadrilateralShaderProgram.destroy()
+    Array(
+      texture2DShaderProgram,
+      color2DShaderProgram,
+      texture3DShaderProgram,
+      color3DShaderProgram,
+    ).foreach(_.destroy())
+
     glCheck { glDeleteVertexArrays(Array(quadrilateralVaoHandle)) }
     glCheck { glDeleteBuffers(Array(quadrilateralVboHandle)) }
   }

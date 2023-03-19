@@ -1,5 +1,5 @@
 import logic.{CursorListener, EventListener, KeyListener, World}
-import org.joml.Vector3f
+import org.joml.{Vector2f, Vector3f}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.concurrent.Eventually
@@ -50,10 +50,13 @@ class LogicSpec extends AnyFlatSpec with Matchers {
     positionChange should be(0)
   }
 
-  "Player" should "rotate on cursor move" in {
+  "Player" should "rotate on cursor move only when the world is ticked" in {
     val originalDirection = world.player.getDirection
-    cursorListener.onCursorMove((5, 5))
-    val newDirection = world.player.getDirection
-    newDirection should not be originalDirection
+    cursorListener.onCursorMove(Vector2f(5, 5))
+    val directionBeforeTick = world.player.getDirection
+    directionBeforeTick should be(originalDirection)
+    world.tick()
+    val directionAfterTick = world.player.getDirection
+    directionAfterTick should not be originalDirection
   }
 }

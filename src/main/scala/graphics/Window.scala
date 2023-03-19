@@ -1,6 +1,7 @@
 package graphics
 
 import logic.{CursorListener, EventListener, KeyListener}
+import org.joml.Vector2f
 import org.lwjgl.glfw.GLFW.*
 import org.lwjgl.glfw.{
   Callbacks,
@@ -107,7 +108,7 @@ class Window(val title: String, var width: Int, var height: Int) {
     (_: Long, xPos: Double, yPos: Double) =>
       if cursorAttached then {
         val middlePoint = (width / 2f, height / 2f)
-        val difference = (xPos.toFloat - middlePoint(0), yPos.toFloat - middlePoint(1))
+        val difference = Vector2f(xPos.toFloat - middlePoint(0), yPos.toFloat - middlePoint(1))
         glfwSetCursorPos(windowHandle, middlePoint(0), middlePoint(1))
         cursorListeners.foreach(listener => listener.onCursorMove(difference))
       }

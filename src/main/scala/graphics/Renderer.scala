@@ -1,9 +1,10 @@
 package graphics
 
+import game.{Game, GameState}
 import logic.{Demon, GameObject, Stage, Wall, World}
 import org.lwjgl.opengl.GL11.glViewport
 import graphics.Utils.glCheck
-import org.joml.{Matrix3f, Matrix4f, Vector3f}
+import org.joml.{Matrix3f, Matrix4f, Vector2f, Vector3f}
 
 /**
  * Renderer draws the World onto the screen
@@ -12,12 +13,15 @@ import org.joml.{Matrix3f, Matrix4f, Vector3f}
  * @param window
  *   Window that the World should be rendered onto
  */
-class Renderer(val world: World, val window: Window) {
+class Renderer(val game: Game, val window: Window) {
+  private val world = game.world
+  private val menu = game.menu
+
   private val renderingHelper = RenderingHelper(window)
   private val cameraRelativeToPlayer = Vector3f(0f, 0.4f, 0f)
   private var cameraPosition = Vector3f(cameraRelativeToPlayer)
-  private var cameraDirection = (0f, 0f)
-  private var viewChange = (0f, 0f)
+  private var cameraDirection = Vector2f(0f, 0f)
+  private var viewChange = Vector2f(0f, 0f)
 
   private val wallHeight = world.wallHeight
   private val wallShapeMatrix =
@@ -30,12 +34,22 @@ class Renderer(val world: World, val window: Window) {
   private val wallTexture = Texture("wall")
   private val floorTexture = Texture("floor")
   private val demonTexture = Texture("demon")
+  private val nameTexture = Texture("text/name")
+  private val startTexture = Texture("text/start")
 
-  def render(): Unit = {
+  def render(state: GameState): Unit = {
     updateViewport()
+    renderingHelper.clear()
+    state match {
+      case GameState.Game       => renderGame()
+      case GameState.Menu       => renderMenu()
+      case GameState.MenuToGame => renderTransition()
+    }
+  }
+
+  private def renderGame(): Unit = {
     updateCameraPosition()
     updateLighting()
-    renderingHelper.clear()
     viewChange = getCameraShake
 
     // Begin draw
@@ -45,6 +59,41 @@ class Renderer(val world: World, val window: Window) {
 
     val scareTimer = world.getScareStatus
     if scareTimer != 0 then drawScare(scareTimer)
+  }
+
+  private def renderMenu(): Unit = {
+    val fadeInOpacity = math.pow(menu.fadeInTimer.toFloat / menu.fadeInTime.toFloat, 2).toFloat
+
+    val nameModelMatrix = Matrix4f()
+    nameModelMatrix.translate(0f, 0.2f, 0f)
+    nameModelMatrix
+      .scale(1f, window.getAspectRatio / nameTexture.getAspectRatio, 0f)
+      .scale(0.4f)
+    renderingHelper.drawTexture2D(nameModelMatrix, nameTexture, opacity = fadeInOpacity)
+
+    val startOpacity = math.pow(math.sin(menu.startTextFaze).toFloat, 2).toFloat
+    val startModelMatrix = Matrix4f()
+    startModelMatrix.translate(0f, -0.65f, 0f)
+    startModelMatrix
+      .scale(1f, window.getAspectRatio / startTexture.getAspectRatio, 0f)
+      .scale(0.4f)
+    renderingHelper.drawTexture2D(
+      startModelMatrix,
+      startTexture,
+      opacity = fadeInOpacity * startOpacity,
+    )
+  }
+
+  private def renderTransition(): Unit = {
+    val transition = game.getTransitionProgress
+    val opacity = if transition < 0.5f then {
+      renderMenu()
+      transition * 2f
+    } else {
+      renderGame()
+      (1f - transition) * 2f
+    }
+    renderingHelper.drawColor2D(Matrix4f(), Array(0f, 0f, 0f, 1f), opacity = opacity)
   }
 
   private def visibleWalls(): Array[Wall] = {
@@ -58,7 +107,7 @@ class Renderer(val world: World, val window: Window) {
       val wall = wallOption.get
       val wallPos = Vector3f(wall.xPos, 0f, wall.zPos)
       wallPos.sub(playerPos)
-      wallPos.rotateY(playerDir(0))
+      wallPos.rotateY(playerDir.x)
       wallPos.z < 1
     }
 
@@ -96,11 +145,11 @@ class Renderer(val world: World, val window: Window) {
     } else 0f
   }
 
-  private def getCameraShake: (Float, Float) = {
+  private def getCameraShake: Vector2f = {
     val demonIntensity = getDemonEffectIntensity
     val demonShake = (0 until 2).map(_ => (math.random().toFloat - 0.5f) * demonIntensity).toArray
     val viewBobbing = math.sin(world.player.getViewChange).toFloat / 75f
-    (demonShake(0), demonShake(1) + viewBobbing)
+    Vector2f(demonShake(0), demonShake(1) + viewBobbing)
   }
 
   private def drawWall(wall: Wall): Unit = {
@@ -115,7 +164,7 @@ class Renderer(val world: World, val window: Window) {
     val normal = Vector3f(1f, 0f, 0f).rotateY(wall.direction.angle).normalize()
     val modelMatrix = createModelMatrix(wallPos, angle, wallShapeMatrix)
 
-    renderingHelper.drawTexture(
+    renderingHelper.drawTexture3D(
       modelMatrix,
       cameraDirection,
       wallTexture,
@@ -141,7 +190,7 @@ class Renderer(val world: World, val window: Window) {
     val modelMatrix =
       createModelMatrix(demonPos, angle, creatureShapeMatrix(Demon.drawSize, demon.height))
 
-    renderingHelper.drawTexture(
+    renderingHelper.drawTexture3D(
       modelMatrix,
       cameraDirection,
       demonTexture,
@@ -159,7 +208,7 @@ class Renderer(val world: World, val window: Window) {
         for (y <- Array(0f, wallHeight)) {
           val modelMatrix = createModelMatrix(Vector3f(position).add(x, y, z), 0f, floorShapeMatrix)
 
-          renderingHelper.drawTexture(
+          renderingHelper.drawTexture3D(
             modelMatrix,
             cameraDirection,
             floorTexture,
@@ -178,7 +227,7 @@ class Renderer(val world: World, val window: Window) {
     modelMatrix.scaleXY(Demon.drawSize, window.getAspectRatio)
     val shake = (0 until 2).map(_ => (math.random().toFloat - 0.5f) * 0.4f)
 
-    renderingHelper.drawImage(modelMatrix, demonTexture, (shake(0), shake(1)))
+    renderingHelper.drawTexture2D(modelMatrix, demonTexture, Vector2f(shake(0), shake(1)), true)
   }
 
   private def updateViewport(): Unit = {

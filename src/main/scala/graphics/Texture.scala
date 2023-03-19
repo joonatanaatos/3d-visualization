@@ -26,6 +26,7 @@ import java.nio.ByteBuffer
  *   Name of the texture
  */
 class Texture(val name: String) {
+  private var width, height: Int = -1
   private val textureHandle: Int = loadTexture()
 
   private def loadTexture(): Int = {
@@ -37,6 +38,10 @@ class Texture(val name: String) {
     decoder.decode(imageBuffer, 4 * decoder.getWidth, PNGDecoder.Format.RGBA)
     imageBuffer.flip()
 
+    // Extract width and height
+    width = decoder.getWidth
+    height = decoder.getHeight
+
     // Create texture object
     val handle = glCheck { glGenTextures() }
     glCheck { glBindTexture(GL_TEXTURE_2D, handle) }
@@ -45,8 +50,8 @@ class Texture(val name: String) {
         GL_TEXTURE_2D,
         0,
         GL_RGBA,
-        decoder.getWidth,
-        decoder.getHeight,
+        width,
+        height,
         0,
         GL_RGBA,
         GL_UNSIGNED_BYTE,
@@ -58,6 +63,8 @@ class Texture(val name: String) {
     imageStream.close()
     handle
   }
+
+  def getAspectRatio: Float = width.toFloat / height.toFloat
 
   def bind(): Unit = {
     glCheck { glBindTexture(GL_TEXTURE_2D, textureHandle) }

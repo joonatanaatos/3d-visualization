@@ -1,13 +1,13 @@
 #version 330
 
-uniform sampler2D texture;
+uniform vec4 color;
 uniform bool invertColor;
+uniform float opacity;
 
 in vec2 vTexCoord;
 
 void main() {
-    vec4 color = texture2D(texture, vTexCoord);
-    float alpha = color.a;
+    float alpha = color.a * opacity;
     vec3 rgb = color.rgb;
     if (invertColor) {
         rgb = vec3(1.0) - rgb;

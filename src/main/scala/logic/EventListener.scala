@@ -1,5 +1,7 @@
 package logic
 
+import org.joml.Vector2f
+
 trait EventListener
 
 trait KeyListener extends EventListener {
@@ -7,5 +9,5 @@ trait KeyListener extends EventListener {
 }
 
 trait CursorListener extends EventListener {
-  def onCursorMove(difference: (Float, Float)): Unit
+  def onCursorMove(difference: Vector2f): Unit
 }
