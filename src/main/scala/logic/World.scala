@@ -1,5 +1,6 @@
 package logic
 
+import audio.{AudioPlayer, Sound}
 import org.joml.Vector3f
 
 import scala.collection.mutable.ArrayBuffer
@@ -59,12 +60,15 @@ class World(val addEventListener: EventListener => Unit) {
       scareTimer -= 1
       if scareTimer == 0 then {
         gameObjects += createNewDemon()
+        AudioPlayer.stop(Sound.Demon)
       }
     }
   }
 
   def startScare(): Unit = {
     scareTimer = scareTime
+    AudioPlayer.setVolume(Sound.Demon, 0f)
+    AudioPlayer.loop(Sound.Demon)
   }
 
   def getGameObjects: Array[GameObject] = gameObjects.toArray

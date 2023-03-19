@@ -1,5 +1,6 @@
 package logic
 
+import audio.{AudioPlayer, Sound}
 import org.joml.Vector3f
 
 object Demon {
@@ -14,6 +15,28 @@ class Demon(initialPosition: Vector3f) extends GameObject(initialPosition) {
   private var direction = 0f
   private val attackThreshold = Demon.attackThreshold
   private val scareThreshold = 0.5f
+  private var distanceFromPlayer = Float.MaxValue
+
+  override def tick(world: World): Unit = {
+    val playerPos = world.player.getPosition
+    val difference = playerPos.sub(position)
+    direction = -difference.angleSigned(Vector3f(0f, 0f, 1f), Vector3f(0f, 1f, 0f))
+    distanceFromPlayer = difference.length
+    if distanceFromPlayer < attackThreshold then {
+      move(world)
+    }
+    if distanceFromPlayer < scareThreshold then {
+      isDead = true
+      world.startScare()
+    }
+    if distanceFromPlayer < 20 then {
+      if !AudioPlayer.isPlaying(Sound.Demon) then {
+        AudioPlayer.setVolume(Sound.Demon, -80f)
+        AudioPlayer.loop(Sound.Demon)
+      }
+      updateSound()
+    }
+  }
 
   private def move(world: World): Unit = {
     val change = Vector3f(0f, 0f, movementSpeed).rotateY(direction)
@@ -23,16 +46,10 @@ class Demon(initialPosition: Vector3f) extends GameObject(initialPosition) {
       position.add(Vector3f(0f, 0f, change.z))
   }
 
-  override def tick(world: World): Unit = {
-    val playerPos = world.player.getPosition
-    val difference = playerPos.sub(position)
-    direction = -difference.angleSigned(Vector3f(0f, 0f, 1f), Vector3f(0f, 1f, 0f))
-    val distance = difference.length
-    if distance < attackThreshold then move(world)
-    if distance < scareThreshold then {
-      isDead = true
-      world.startScare()
-    }
+  private def updateSound(): Unit = {
+    val volume =
+      math.max(-4f * (distanceFromPlayer - scareThreshold), -80f)
+    AudioPlayer.setVolume(Sound.Demon, volume)
   }
 
   def getDirection: Float = direction

@@ -4,6 +4,7 @@ import javax.sound.sampled.{AudioSystem, Clip, FloatControl}
 
 enum Sound(val name: String) {
   case BackgroundMusic extends Sound("background-music")
+  case Demon extends Sound("demon")
 
   case Step1 extends Sound("steps/step-01")
   case Step2 extends Sound("steps/step-02")
@@ -70,4 +71,7 @@ enum Sound(val name: String) {
     val gainControl = getGainControl
     gainControl.setValue(volume)
   }
+
+  @throws[RuntimeException]
+  protected[audio] def isPlaying: Boolean = getClip.isActive
 }
