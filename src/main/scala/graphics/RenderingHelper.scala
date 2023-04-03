@@ -323,7 +323,7 @@ class RenderingHelper(val window: Window) {
     glCheck { glEnableVertexAttribArray(vertexPosIndex) }
     glCheck { glEnableVertexAttribArray(textureCoordIndex) }
 
-    modelMatrix.translate(0f, 0f, -0.5f)
+    modelMatrix.translate(0f, 0f, -0.4f)
 
     glCheck {
       glUniformMatrix4fv(

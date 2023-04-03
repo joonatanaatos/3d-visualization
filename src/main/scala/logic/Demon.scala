@@ -5,7 +5,6 @@ import org.joml.Vector3f
 
 object Demon {
   val attackThreshold = 10f
-  val drawSize = 0.75f
 }
 
 class Demon(world: World, initialPosition: Vector3f) extends GameObject(world, initialPosition) {
@@ -27,7 +26,7 @@ class Demon(world: World, initialPosition: Vector3f) extends GameObject(world, i
     }
     if distanceFromPlayer < scareThreshold then {
       isDead = true
-      world.startScare()
+      world.startScare(this)
     }
     if distanceFromPlayer < 20 then {
       if !AudioPlayer.isPlaying(Sound.Demon) then {

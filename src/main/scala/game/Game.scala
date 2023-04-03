@@ -18,7 +18,7 @@ class Game extends GameInterface {
   private var engine: Option[EngineInterface] = None
   private var state: GameState = GameState.Menu
 
-  private val transitionTime = 300
+  private val transitionTime = 180
   private var transitionTimer = 0
 
   override def init(engine: EngineInterface): Unit = {

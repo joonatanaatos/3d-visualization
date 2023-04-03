@@ -29,7 +29,7 @@ class Renderer(val game: Game, val window: Window) {
   private val floorShapeMatrix =
     Matrix4f().scale(0.5f).translate(1f, 0f, 1f).rotateX(math.Pi.toFloat / 2f)
   private def creatureShapeMatrix(width: Float, height: Float) =
-    Matrix4f().scaleXY(width, 1f).scale(0.5f * height).translate(0f, 1f, 0f)
+    Matrix4f().scaleXY(width, height).scale(0.5f).translate(0f, 1f, 0f)
 
   private val wallTexture = Texture("wall")
   private val floorTexture = Texture("floor")
@@ -57,8 +57,8 @@ class Renderer(val game: Game, val window: Window) {
     visibleWalls().foreach(drawWall)
     world.getGameObjects.foreach(drawGameObject)
 
-    val scareTimer = world.getScareStatus
-    if scareTimer != 0 then drawScare(scareTimer)
+    val (scareTimer, scareCause) = world.getScareStatus
+    if scareTimer != 0 && scareCause.isDefined then drawScare(scareTimer, scareCause.get)
   }
 
   private def renderMenu(): Unit = {
@@ -188,7 +188,11 @@ class Renderer(val game: Game, val window: Window) {
     demonPos.sub(cameraPosition)
 
     val modelMatrix =
-      createModelMatrix(demonPos, angle, creatureShapeMatrix(Demon.drawSize, demon.height))
+      createModelMatrix(
+        demonPos,
+        angle,
+        creatureShapeMatrix(demonTexture.getAspectRatio * demon.height, demon.height),
+      )
 
     renderingHelper.drawTexture3D(
       modelMatrix,
@@ -220,11 +224,14 @@ class Renderer(val game: Game, val window: Window) {
     }
   }
 
-  private def drawScare(scareTimer: Int): Unit = {
+  private def drawScare(scareTimer: Int, demon: Demon): Unit = {
     val modelMatrix = Matrix4f()
     modelMatrix.translate(0f, -0.2f, 0f)
-    modelMatrix.scale(1.6f - (scareTimer / 200f))
-    modelMatrix.scaleXY(Demon.drawSize, window.getAspectRatio)
+    modelMatrix.scale(2f - (scareTimer / 200f))
+    modelMatrix.scaleXY(
+      2f * demon.height * demonTexture.getAspectRatio / window.getAspectRatio,
+      demon.height,
+    )
     val shake = (0 until 2).map(_ => (math.random().toFloat - 0.5f) * 0.4f)
 
     renderingHelper.drawTexture2D(modelMatrix, demonTexture, Vector2f(shake(0), shake(1)), true)

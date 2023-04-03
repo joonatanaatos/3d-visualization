@@ -18,6 +18,7 @@ class World(val addEventListener: EventListener => Unit) {
 
   private val scareTime = 60
   private var scareTimer = 0
+  private var scareCause: Option[Demon] = None
 
   private val spawnPoint = stage.getSpawnPoint
 
@@ -66,14 +67,16 @@ class World(val addEventListener: EventListener => Unit) {
     if (scareTimer > 0) {
       scareTimer -= 1
       if scareTimer == 0 then {
+        scareCause = None
         gameObjects += createNewDemon()
         AudioPlayer.stop(Sound.Demon)
       }
     }
   }
 
-  def startScare(): Unit = {
+  def startScare(demon: Demon): Unit = {
     scareTimer = scareTime
+    scareCause = Option(demon)
     AudioPlayer.setVolume(Sound.Demon, 0f)
     AudioPlayer.loop(Sound.Demon)
   }
@@ -82,5 +85,5 @@ class World(val addEventListener: EventListener => Unit) {
 
   def getGameObjects: Array[GameObject] = gameObjects.toArray
 
-  def getScareStatus: Int = scareTimer
+  def getScareStatus: (Int, Option[Demon]) = (scareTimer, scareCause)
 }

@@ -4,7 +4,7 @@ import logic.KeyListener
 import org.lwjgl.glfw.GLFW
 
 class Menu(game: Game) extends KeyListener {
-  val fadeInTime: Int = 300
+  val fadeInTime: Int = 180
   var fadeInTimer: Int = 0
   var startTextFaze: Float = 0f
   private val startTextSpeed: Float = 0.02f
