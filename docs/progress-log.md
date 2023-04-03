@@ -92,3 +92,14 @@ Kehityksessä esiintyneitä haasteita:
 
 Projektiin on käytetty noin 25 tuntia lisää aikaa ja siinä aletaan menemään ohi aiheen.
 Olen käyttänyt tähän projektiin jo liikaa aikaa ja minun pitäisi määrittää, milloin se on "valmis".
+
+## 3.4.2023
+
+Olen saanut valmiiksi kaikki suuremmat kokonaisuudet ja toiminnallisuudet.
+
+Projektiin ei ole lisätty mitään uusia luokkia tai toiminnallisuuksia.
+
+Mitään uusia virheitä tai ongelmatilanteita ei ole esiintynyt.
+
+Viimisen kahden viikon aikana projektiin ei ole käytetty yhtään aikaa.
+Nykyinen tilanne vastaa projektisuunnitelmassa arvioitua tilannetta.
