@@ -26,7 +26,7 @@ class World(val addEventListener: EventListener => Unit) {
     new Light(
       this,
       Vector3f(light(0).toFloat + 0.5f, wallHeight - 0.1f, light(1).toFloat + 0.5f),
-      1.4f,
+      2f,
       light(2),
     ),
   )

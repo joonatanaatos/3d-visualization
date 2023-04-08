@@ -4,7 +4,7 @@ import org.joml.Vector3f
 
 class Cube(world: World, initialPosition: Vector3f) extends GameObject(world, initialPosition) {
   private val rotation = Vector3f(0, 0, 0)
-  private val rotationSpeed = Vector3f(0.015f, 0.02f, 0.01f)
+  private val rotationSpeed = Vector3f(0.01f, 0.015f, 0.005f)
   private var floatState = 0f
   private val floatSpeed = 0.03f
   val size = 0.3f

@@ -287,8 +287,8 @@ class Renderer(val game: Game, val window: Window) {
     modelMatrix.translate(0f, -0.2f, 0f)
     modelMatrix.scale(2f - (scareTimer / 200f))
     modelMatrix.scaleXY(
-      2f * demon.height * demonTexture.getAspectRatio / window.getAspectRatio,
-      demon.height,
+      2.5f * demon.height * demonTexture.getAspectRatio / window.getAspectRatio,
+      1.5f * demon.height,
     )
     val shake = (0 until 2).map(_ => (math.random().toFloat - 0.5f) * 0.4f)
 
@@ -302,7 +302,7 @@ class Renderer(val game: Game, val window: Window) {
   }
 
   private def updateLighting(): Unit = {
-    renderingHelper.setAmbientLightBrightness(0.12f)
+    renderingHelper.setAmbientLightBrightness(0.08f)
     renderingHelper.setPointLights(
       world.lights
         .map(light => (light.getPosition.sub(cameraPosition), light.getBrightness))

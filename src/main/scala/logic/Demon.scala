@@ -4,7 +4,7 @@ import audio.{AudioPlayer, Sound}
 import org.joml.Vector3f
 
 object Demon {
-  val attackThreshold = 10f
+  val attackThreshold = 9f
 }
 
 class Demon(world: World, initialPosition: Vector3f) extends GameObject(world, initialPosition) {

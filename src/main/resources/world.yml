@@ -9,30 +9,34 @@ stage: |-
   X O O O X X X X X X X O X X X X O O L O O X X X
   X X O X X X X X X X X O X X X X O O O O O X X X
   X X O X X X X X X X X O X X X X X X O X X X X X
+  X X O X X X X X X X X O X X X X X X O X X X X X
   X X O X X X X X X O O O O O X X X X O X X X X X
   X X O X X X X X X O O O O O X X X X O X X X X X
-  X X L O O O O O O O O l O O O O O O O X X X X X
+  X X L O O O O O O O O L O O O O O O O X X X X X
   X X X X X X X X X O O O O O X X X X X X X X X X
   X X X X X X X X X O O O O O X X X X X X X X X X
   X X X X X X X X X X X O X X X X X X X X X X X X
   X X X X X X X X X X X O X X X X X X X X X X X X
   X X X X X X X X X X X O X X X X X X X X X X X X
+  X X O X X X X X X X X O X X X X X X O X X X X X
   X X X X L O O O O O O O X X X X X X X X X X X X
   X X X X O X X X X X X X X X X X X X X X X X X X
   X X X X O X X X X X X X X X X X X X X X X X X X
   X X X X O X X X X X X X X X X X X X X X X X X X
-  X O O O O O O O O O O O O O O O O O O O O O O X
-  X O O O L O O O O O O O O O O O O O O O l O O X
-  X O O O O O O O O O O O O O O O O O O O O O O X
+  X X O O O O O O O O O O O O O O O O O O O O X X
+  X X O O L O O O O O O O O O O O O O O l d O X X
+  X X O O O O O O O O O O O O O O O O O O O O X X
   X X X X O X X X X X X X X X X X X X X X X X X X
   X X X X O X X X X X X X X X X X X X X X X X X X
   X X X X O X X X X X X X X X X X X X X X X X X X
   X X X X O X X X X X X X X X X X X X X X X X X X
-  X X X X O X X X X X X X X O O O O O O O X X X X
-  X X X X O X X X X X X X X O O O O O O O X X X X
-  X X X O O O X X X X X X X O O c L c O O X X X X
-  X X X O l O O O O O O O O O O L O L O O X X X X
-  X X X O O O X X X X X X X O O c L c O O X X X X
-  X X X X X X X X X X X X X O O O O O O O X X X X
-  X X X X X X X X X X X X X O O O O O O O X X X X
+  X X X X O X X X X X X X X X X X X X X X X X X X
+  X X X X O X X X X X X X X X X X X X X X X X X X
+  X X X X O X X X X O O O O O O O X X X X X X X X
+  X X X X O X X X X O O O L O O O X X X X X X X X
+  X X X O O O X X X O O c O c O O X X X X X X X X
+  O O O O l O O O O O L O O O L O X X X X X X X X
+  X X X O O O X X X O O c O c O O X X X X X X X X
+  X X X X X X X X X O O O L O O O X X X X X X X X
+  X X X X X X X X X O O O O O O O X X X X X X X X
   X X X X X X X X X X X X X X X X X X X X X X X X

@@ -40,7 +40,7 @@ vec3 getSpecularLight(vec3 rgb, PointLight pointLight) {
     vec3 lightDir = pointLight.position - viewPos;
     vec3 viewDir = viewPos;
     vec3 reflectDir = reflect(lightDir, normal);
-    float angleFactor = pow(max(0.0f, dot(normalize(viewDir), normalize(reflectDir))), 8.0f);
+    float angleFactor = pow(max(0.0f, dot(normalize(viewDir), normalize(reflectDir))), 20.0f);
     float brightnessFactor = pointLight.brightness;
     float lightDistance = length(lightDir);
     float distanceFactor = pow(lightSteepness, 2.0f) / pow(lightDistance + lightSteepness, 2.0f);
