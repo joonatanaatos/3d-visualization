@@ -1,12 +1,13 @@
 spawn:
   x: 2
-  y: 1
+  y: 2
 stage: |-
   X X X X X X X X X X X X X X X X X X X X X X X X
-  X O O O X X X X X X X X X X X X X X X X X X X X
-  X O L O X X X X X X X O O O O O O O l X X X X X
-  X O O O X X X X X X X O X X X X X X O X X X X X
-  X X O X X X X X X X X O X X X X X X O X X X X X
+  X X X X X X X X X X X X X X X X O O O O O X X X
+  X O O O X X X X X X X X X X X X O O L O O X X X
+  X O L O X X X X X X X O O O O O O L c L O X X X
+  X O O O X X X X X X X O X X X X O O L O O X X X
+  X X O X X X X X X X X O X X X X O O O O O X X X
   X X O X X X X X X X X O X X X X X X O X X X X X
   X X O X X X X X X O O O O O X X X X O X X X X X
   X X O X X X X X X O O O O O X X X X O X X X X X
@@ -16,16 +17,22 @@ stage: |-
   X X X X X X X X X X X O X X X X X X X X X X X X
   X X X X X X X X X X X O X X X X X X X X X X X X
   X X X X X X X X X X X O X X X X X X X X X X X X
-  X X X X O O O O O O O O X X X X X X X X X X X X
+  X X X X L O O O O O O O X X X X X X X X X X X X
   X X X X O X X X X X X X X X X X X X X X X X X X
   X X X X O X X X X X X X X X X X X X X X X X X X
   X X X X O X X X X X X X X X X X X X X X X X X X
   X O O O O O O O O O O O O O O O O O O O O O O X
-  X O O O l O O O O O O O O O O O O O O O l O O X
+  X O O O L O O O O O O O O O O O O O O O l O O X
   X O O O O O O O O O O O O O O O O O O O O O O X
   X X X X O X X X X X X X X X X X X X X X X X X X
   X X X X O X X X X X X X X X X X X X X X X X X X
   X X X X O X X X X X X X X X X X X X X X X X X X
   X X X X O X X X X X X X X X X X X X X X X X X X
-  X X X X O X X X X X X X X X X X X X X X X X X X
+  X X X X O X X X X X X X X O O O O O O O X X X X
+  X X X X O X X X X X X X X O O O O O O O X X X X
+  X X X O O O X X X X X X X O O c L c O O X X X X
+  X X X O l O O O O O O O O O O L O L O O X X X X
+  X X X O O O X X X X X X X O O c L c O O X X X X
+  X X X X X X X X X X X X X O O O O O O O X X X X
+  X X X X X X X X X X X X X O O O O O O O X X X X
   X X X X X X X X X X X X X X X X X X X X X X X X

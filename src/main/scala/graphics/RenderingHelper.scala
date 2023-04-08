@@ -207,6 +207,70 @@ class RenderingHelper(val window: Window) {
     )
   }
 
+  private def enableRendering(): Unit = {
+    glCheck { glBindVertexArray(quadrilateralVaoHandle) }
+    glCheck { glEnableVertexAttribArray(vertexPosIndex) }
+    glCheck { glEnableVertexAttribArray(textureCoordIndex) }
+  }
+
+  private def disableRendering(): Unit = {
+    glCheck { glDisableVertexAttribArray(vertexPosIndex) }
+    glCheck { glDisableVertexAttribArray(textureCoordIndex) }
+    glCheck { glBindVertexArray(0) }
+  }
+
+  private def setCommonUniforms3D(
+      shaderProgram: ShaderProgram,
+      modelMatrix: Matrix4f,
+      normal: Vector3f,
+      translate: Vector2f,
+      projectionMatrix: Matrix4f,
+      viewMatrix: Matrix4f,
+      applyViewMatrix: Vector3f => Vector3f,
+      lightPositions: Array[Vector3f],
+  ): Unit = {
+    glCheck {
+      glUniformMatrix4fv(
+        shaderProgram.uniform("mvMatrix"),
+        false,
+        matrixToArray(Matrix4f(viewMatrix).mul(modelMatrix)),
+      )
+    }
+    glCheck {
+      glUniformMatrix4fv(
+        shaderProgram.uniform("pMatrix"),
+        false,
+        matrixToArray(projectionMatrix),
+      )
+    }
+    glCheck {
+      glUniform3fv(
+        shaderProgram.uniform("normal"),
+        vectorToArray(applyViewMatrix(normal)),
+      )
+    }
+    glCheck {
+      glUniform2fv(shaderProgram.uniform("translate"), Array(translate.x, translate.y))
+    }
+    glCheck {
+      glUniform1f(shaderProgram.uniform("ambientLightBrightness"), ambientLightBrightness)
+    }
+    for (i <- 0 until math.min(pointLights.length, maxNumberOfLights)) {
+      glCheck {
+        glUniform3fv(
+          shaderProgram.dynamicUniform(s"pointLights[$i].position"),
+          vectorToArray(lightPositions(i)),
+        )
+      }
+      glCheck {
+        glUniform1f(
+          shaderProgram.dynamicUniform(s"pointLights[$i].brightness"),
+          pointLights(i)(1),
+        )
+      }
+    }
+  }
+
   /**
    * Draws a textured quadrilateral and applies a 3D transformation.
    * @param modelMatrix
@@ -227,9 +291,7 @@ class RenderingHelper(val window: Window) {
   ): Unit = {
     // Bind correct VAO and shader program
     glCheck { texture3DShaderProgram.bind() }
-    glCheck { glBindVertexArray(quadrilateralVaoHandle) }
-    glCheck { glEnableVertexAttribArray(vertexPosIndex) }
-    glCheck { glEnableVertexAttribArray(textureCoordIndex) }
+    enableRendering()
 
     // Create MVP matrix
     val projectionMatrix = createProjectionMatrix()
@@ -243,48 +305,18 @@ class RenderingHelper(val window: Window) {
     val lightPositions = pointLights.map(light => applyViewMatrix(light(0)))
 
     // Set uniforms
-    glCheck {
-      glUniformMatrix4fv(
-        texture3DShaderProgram.uniform("mvMatrix"),
-        false,
-        matrixToArray(Matrix4f(viewMatrix).mul(modelMatrix)),
-      )
-    }
-    glCheck {
-      glUniformMatrix4fv(
-        texture3DShaderProgram.uniform("pMatrix"),
-        false,
-        matrixToArray(projectionMatrix),
-      )
-    }
-    glCheck {
-      glUniform3fv(
-        texture3DShaderProgram.uniform("normal"),
-        vectorToArray(applyViewMatrix(normal)),
-      )
-    }
+    setCommonUniforms3D(
+      texture3DShaderProgram,
+      modelMatrix,
+      normal,
+      translate,
+      projectionMatrix,
+      viewMatrix,
+      applyViewMatrix,
+      lightPositions,
+    )
     glCheck {
       glUniform1i(texture3DShaderProgram.uniform("texture"), 0)
-    }
-    glCheck {
-      glUniform2fv(texture3DShaderProgram.uniform("translate"), Array(translate.x, translate.y))
-    }
-    glCheck {
-      glUniform1f(texture3DShaderProgram.uniform("ambientLightBrightness"), ambientLightBrightness)
-    }
-    for (i <- 0 until math.min(pointLights.length, maxNumberOfLights)) {
-      glCheck {
-        glUniform3fv(
-          texture3DShaderProgram.dynamicUniform(s"pointLights[$i].position"),
-          vectorToArray(lightPositions(i)),
-        )
-      }
-      glCheck {
-        glUniform1f(
-          texture3DShaderProgram.dynamicUniform(s"pointLights[$i].brightness"),
-          pointLights(i)(1),
-        )
-      }
     }
 
     // Bind texture
@@ -297,14 +329,69 @@ class RenderingHelper(val window: Window) {
     texture.unbind()
 
     // Unbind everything and restore state
-    glCheck { glDisableVertexAttribArray(vertexPosIndex) }
-    glCheck { glDisableVertexAttribArray(textureCoordIndex) }
-    glCheck { glBindVertexArray(0) }
+    disableRendering()
     glCheck { texture3DShaderProgram.unbind() }
   }
 
   /**
+   * Draws a colored quadrilateral and applies a 3D transformation.
+   * @param modelMatrix
+   *   model matrix
+   * @param viewDirection
+   *   view direction
+   * @param color
+   *   color
+   * @param normal
+   *   normal vector
+   */
+  def drawColor3D(
+      modelMatrix: Matrix4f = Matrix4f(),
+      viewDirection: Vector2f = Vector2f(),
+      color: Array[Float],
+      normal: Vector3f,
+      translate: Vector2f = Vector2f(),
+  ): Unit = {
+    // Bind correct VAO and shader program
+    glCheck { color3DShaderProgram.bind() }
+    enableRendering()
+
+    // Create MVP matrix
+    val projectionMatrix = createProjectionMatrix()
+    val viewMatrix = createViewMatrix(viewDirection)
+
+    def applyViewMatrix(vector: Vector3f): Vector3f = {
+      val result = Vector4f(vector, 1f).mul(viewMatrix)
+      Vector3f(result.x, result.y, result.z)
+    }
+
+    val lightPositions = pointLights.map(light => applyViewMatrix(light(0)))
+
+    // Set uniforms
+    setCommonUniforms3D(
+      color3DShaderProgram,
+      modelMatrix,
+      normal,
+      translate,
+      projectionMatrix,
+      viewMatrix,
+      applyViewMatrix,
+      lightPositions,
+    )
+    glCheck {
+      glUniform4fv(color3DShaderProgram.uniform("color"), color.take(4))
+    }
+
+    // Draw vertices
+    glCheck { glDrawArrays(GL_TRIANGLE_STRIP, 0, 4) }
+
+    // Unbind everything and restore state
+    disableRendering()
+    glCheck { color3DShaderProgram.unbind() }
+  }
+
+  /**
    * Draws a textured quadrilateral without applying a 3D transformation.
+   *
    * @param modelMatrix
    *   model matrix
    * @param texture
@@ -319,9 +406,7 @@ class RenderingHelper(val window: Window) {
   ): Unit = {
     // Bind correct VAO and shader program
     glCheck { texture2DShaderProgram.bind() }
-    glCheck { glBindVertexArray(quadrilateralVaoHandle) }
-    glCheck { glEnableVertexAttribArray(vertexPosIndex) }
-    glCheck { glEnableVertexAttribArray(textureCoordIndex) }
+    enableRendering()
 
     modelMatrix.translate(0f, 0f, -0.4f)
 
@@ -355,9 +440,7 @@ class RenderingHelper(val window: Window) {
     texture.unbind()
 
     // Unbind everything and restore state
-    glCheck { glDisableVertexAttribArray(vertexPosIndex) }
-    glCheck { glDisableVertexAttribArray(textureCoordIndex) }
-    glCheck { glBindVertexArray(0) }
+    disableRendering()
     glCheck { texture2DShaderProgram.unbind() }
   }
 
@@ -370,9 +453,7 @@ class RenderingHelper(val window: Window) {
   ): Unit = {
     // Bind correct VAO and shader program
     glCheck { color2DShaderProgram.bind() }
-    glCheck { glBindVertexArray(quadrilateralVaoHandle) }
-    glCheck { glEnableVertexAttribArray(vertexPosIndex) }
-    glCheck { glEnableVertexAttribArray(textureCoordIndex) }
+    enableRendering()
 
     modelMatrix.translate(0f, 0f, -0.5f)
 
@@ -400,9 +481,7 @@ class RenderingHelper(val window: Window) {
     glCheck { glDrawArrays(GL_TRIANGLE_STRIP, 0, 4) }
 
     // Unbind everything and restore state
-    glCheck { glDisableVertexAttribArray(vertexPosIndex) }
-    glCheck { glDisableVertexAttribArray(textureCoordIndex) }
-    glCheck { glBindVertexArray(0) }
+    disableRendering()
     glCheck { color2DShaderProgram.unbind() }
   }
 

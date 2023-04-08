@@ -16,7 +16,7 @@ in vec3 viewPos;
 in float cameraDistance;
 in vec2 vTexCoord;
 
-float lightSteepness = 0.4f;
+float lightSteepness = 0.6f;
 float distanceSteepness = 10.0f;
 
 float distanceFactor() {
@@ -40,7 +40,7 @@ vec3 getSpecularLight(vec3 rgb, PointLight pointLight) {
     vec3 lightDir = pointLight.position - viewPos;
     vec3 viewDir = viewPos;
     vec3 reflectDir = reflect(lightDir, normal);
-    float angleFactor = pow(max(0.0f, dot(normalize(viewDir), normalize(reflectDir))), 4.0f);
+    float angleFactor = pow(max(0.0f, dot(normalize(viewDir), normalize(reflectDir))), 8.0f);
     float brightnessFactor = pointLight.brightness;
     float lightDistance = length(lightDir);
     float distanceFactor = pow(lightSteepness, 2.0f) / pow(lightDistance + lightSteepness, 2.0f);

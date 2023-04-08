@@ -26,7 +26,7 @@ class World(val addEventListener: EventListener => Unit) {
     new Light(
       this,
       Vector3f(light(0).toFloat + 0.5f, wallHeight - 0.1f, light(1).toFloat + 0.5f),
-      0.8f,
+      1.4f,
       light(2),
     ),
   )
@@ -36,11 +36,17 @@ class World(val addEventListener: EventListener => Unit) {
       Vector3f(demon(0).toFloat + 0.5f, 0f, demon(1).toFloat + 0.5f),
     ),
   )
+  private val cubes: Array[Cube] = stage.getCubePositions.map(cube =>
+    new Cube(
+      this,
+      Vector3f(cube(0).toFloat + 0.5f, wallHeight / 2, cube(1).toFloat + 0.5f),
+    ),
+  )
   val player =
     new Player(this, Vector3f(spawnPoint(0).toFloat + 0.5f, 0f, spawnPoint(1).toFloat + 0.5f))
 
   private var gameObjects: ArrayBuffer[GameObject] =
-    ArrayBuffer[GameObject](lights ++ demons ++ Array(player): _*)
+    ArrayBuffer[GameObject](lights ++ demons ++ cubes ++ Array(player): _*)
 
   addEventListener(player)
 

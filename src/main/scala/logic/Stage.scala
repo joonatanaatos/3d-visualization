@@ -32,6 +32,7 @@ class Stage {
   private val (horizontalWalls, verticalWalls) = generateWalls()
   private val lightPositions = findLights()
   private val demonPositions = findDemons()
+  private val cubePositions = findCubes()
 
   def getWallPositions: (Array[Array[Option[Wall]]], Array[Array[Option[Wall]]]) =
     (horizontalWalls, verticalWalls)
@@ -49,9 +50,8 @@ class Stage {
   }
 
   def getLightPositions: Array[(Int, Int, Boolean)] = lightPositions
-
   def getDemonPositions: Array[(Int, Int)] = demonPositions
-
+  def getCubePositions: Array[(Int, Int)] = cubePositions
   def getSpawnPoint: (Int, Int) = spawnPoint
 
   private def loopThroughWalls(f: (Int, Int) => Unit): Unit = {
@@ -102,43 +102,34 @@ class Stage {
     (horizontalWalls, verticalWalls)
   }
 
-  private def findLights(): Array[(Int, Int, Boolean)] = {
-    def lightAt(x: Int, y: Int): Option[Boolean] = {
-      if y < 0 || y >= height || x < 0 || x >= width then return None
-      val character = stageGrid(y)(x)
-      if character == "L" then Option(false)
-      else if character == "l" then Option(true)
-      else None
+  private def findObjects(
+      identifiers: Array[String] = Array(),
+      filter: (Int, Int) => Boolean = null,
+  ): Array[(Int, Int)] = {
+    def objectAt = {
+      if filter == null then
+        (x: Int, y: Int) => {
+          if y < 0 || y >= height || x < 0 || x >= width then false
+          else identifiers.contains(stageGrid(y)(x))
+        }
+      else filter
     }
 
-    val lights = ArrayBuffer[(Int, Int, Boolean)]()
+    val objects = ArrayBuffer[(Int, Int)]()
 
     loopThroughWalls((x, y) => {
-      val light = lightAt(x, y)
-      if light.isDefined then {
-        val position: (Int, Int, Boolean) = (x, y, light.get)
-        lights += position
-      }
-    })
-    lights.toArray
-  }
-
-  private def findDemons(): Array[(Int, Int)] = {
-    def demonAt(x: Int, y: Int): Boolean = {
-      if y < 0 || y >= height || x < 0 || x >= width then return false
-      stageGrid(y)(x) == "d"
-    }
-
-    val demons = ArrayBuffer[(Int, Int)]()
-
-    loopThroughWalls((x, y) => {
-      if demonAt(x, y) then {
+      if objectAt(x, y) then {
         val position: (Int, Int) = (x, y)
-        demons += position
+        objects += position
       }
     })
-    demons.toArray
+    objects.toArray
   }
+
+  private def findDemons(): Array[(Int, Int)] = findObjects(Array("d"))
+  private def findCubes(): Array[(Int, Int)] = findObjects(Array("c"))
+  private def findLights(): Array[(Int, Int, Boolean)] =
+    findObjects(Array("l", "L")).map((x, y) => (x, y, stageGrid(y)(x) == "l"))
 
   private def squareOverlapsWall(
       wallPos: (Int, Int),

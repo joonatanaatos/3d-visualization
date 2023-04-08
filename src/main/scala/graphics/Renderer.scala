@@ -1,7 +1,7 @@
 package graphics
 
 import game.{Game, GameState}
-import logic.{Demon, GameObject, Stage, Wall, World}
+import logic.{Cube, Demon, GameObject, Stage, Wall, World}
 import org.lwjgl.opengl.GL11.glViewport
 import graphics.Utils.glCheck
 import org.joml.{Matrix3f, Matrix4f, Vector2f, Vector3f}
@@ -30,6 +30,15 @@ class Renderer(val game: Game, val window: Window) {
     Matrix4f().scale(0.5f).translate(1f, 0f, 1f).rotateX(math.Pi.toFloat / 2f)
   private def creatureShapeMatrix(width: Float, height: Float) =
     Matrix4f().scaleXY(width, height).scale(0.5f).translate(0f, 1f, 0f)
+  private def cubeSideShapeMatrix(xAngle: Float, yAngle: Float, size: Float, rotation: Vector3f) =
+    Matrix4f()
+      .rotateZ(rotation.z)
+      .rotateY(rotation.y)
+      .rotateX(rotation.x)
+      .rotateY(yAngle)
+      .rotateX(xAngle)
+      .scale(size / 2f)
+      .translate(Vector3f(0f, 0f, 1f))
 
   private val wallTexture = Texture("wall")
   private val floorTexture = Texture("floor")
@@ -176,6 +185,7 @@ class Renderer(val game: Game, val window: Window) {
   private def drawGameObject(gameObject: GameObject): Unit = {
     gameObject match {
       case demon: Demon => drawDemon(demon)
+      case cube: Cube   => drawCube(cube)
       case _            =>
     }
   }
@@ -201,6 +211,50 @@ class Renderer(val game: Game, val window: Window) {
       normal,
       viewChange,
     )
+  }
+
+  private def drawCube(cube: Cube): Unit = {
+    val cubePos = cube.getPosition
+    val rotation = cube.getRotation
+    val size = cube.size
+
+    cubePos.sub(cameraPosition)
+
+    // [normal vector, color]
+    val surfaces = Array(
+      (Vector3f(1f, 0, 0), Array(0, 0, 1f, 1f)),
+      (Vector3f(-1f, 0, 0), Array(1f, 1f, 0, 1f)),
+      (Vector3f(0, 1f, 0), Array(0, 1f, 0, 1f)),
+      (Vector3f(0, -1f, 0), Array(1f, 0, 1f, 1f)),
+      (Vector3f(0, 0, 1f), Array(1f, 0, 0, 1f)),
+      (Vector3f(0, 0, -1f), Array(0, 1f, 1f, 1f)),
+    )
+
+    for (surface <- surfaces) {
+      val normal = surface(0)
+
+      val yAngle =
+        if surface(0).z == -1f then math.Pi.toFloat else normal.x * math.Pi.toFloat / 2f
+      val xAngle = -normal.y * math.Pi.toFloat / 2f
+
+      val position = Vector3f(cubePos)
+      val shapeMatrix = cubeSideShapeMatrix(xAngle, yAngle, size, rotation)
+      normal.rotateX(rotation.x).rotateY(rotation.y).rotateZ(rotation.z)
+
+      val modelMatrix = createModelMatrix(
+        position,
+        0,
+        shapeMatrix,
+      )
+
+      renderingHelper.drawColor3D(
+        modelMatrix,
+        cameraDirection,
+        surface(1),
+        normal,
+        viewChange,
+      )
+    }
   }
 
   private def drawFloorAndCeiling(width: Int, depth: Int): Unit = {
@@ -244,7 +298,7 @@ class Renderer(val game: Game, val window: Window) {
   }
 
   private def updateLighting(): Unit = {
-    renderingHelper.setAmbientLightBrightness(0.02f)
+    renderingHelper.setAmbientLightBrightness(0.12f)
     renderingHelper.setPointLights(
       world.lights
         .map(light => (light.getPosition.sub(cameraPosition), light.getBrightness))
