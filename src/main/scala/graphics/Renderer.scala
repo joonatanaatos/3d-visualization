@@ -8,14 +8,16 @@ import org.joml.{Matrix3f, Matrix4f, Vector2f, Vector3f}
 
 /**
  * Renderer draws the World onto the screen
- * @param world
- *   World to be visualized
+ * @param game
+ *   Game to be visualized
  * @param window
  *   Window that the World should be rendered onto
  */
 class Renderer(val game: Game, val window: Window) {
   private val world = game.world
   private val menu = game.menu
+
+  private val renderDistance = 40
 
   private val renderingHelper = RenderingHelper(window)
   private val cameraRelativeToPlayer = Vector3f(0f, 0.4f, 0f)
@@ -117,7 +119,7 @@ class Renderer(val game: Game, val window: Window) {
       val wallPos = Vector3f(wall.xPos, 0f, wall.zPos)
       wallPos.sub(playerPos)
       wallPos.rotateY(playerDir.x)
-      wallPos.z < 1
+      wallPos.z < 1 && wallPos.length < renderDistance
     }
 
     (horizontalWalls ++ verticalWalls).flatten.filter(isVisible).map(w => w.get)
@@ -183,10 +185,12 @@ class Renderer(val game: Game, val window: Window) {
   }
 
   private def drawGameObject(gameObject: GameObject): Unit = {
-    gameObject match {
-      case demon: Demon => drawDemon(demon)
-      case cube: Cube   => drawCube(cube)
-      case _            =>
+    if gameObject.getPosition.sub(world.player.getPosition).length < renderDistance then {
+      gameObject match {
+        case demon: Demon => drawDemon(demon)
+        case cube: Cube   => drawCube(cube)
+        case _            =>
+      }
     }
   }
 
