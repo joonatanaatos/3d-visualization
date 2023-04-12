@@ -1,7 +1,5 @@
 import engine.Engine
 import game.Game
-import graphics.{Renderer, RenderingHelper, Window}
-import logic.World
 
 @main
 def main(): Unit = {
