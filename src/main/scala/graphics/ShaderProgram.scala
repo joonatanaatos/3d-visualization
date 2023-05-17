@@ -49,8 +49,10 @@ class ShaderProgram(
     throw new RuntimeException(s"Failed to create program for \"$vertexName\"")
   }
 
-  private val vertexShaderCode = Files.readString(Paths.get(s"src/main/glsl/$vertexName.vert"))
-  private val fragmentShaderCode = Files.readString(Paths.get(s"src/main/glsl/$fragmentName.frag"))
+  private val vertexShaderStream = getClass.getResourceAsStream(s"/glsl/$vertexName.vert")
+  private val vertexShaderCode = new String(vertexShaderStream.readAllBytes())
+  private val fragmentShaderStream = getClass.getResourceAsStream(s"/glsl/$fragmentName.frag")
+  private val fragmentShaderCode = new String(fragmentShaderStream.readAllBytes())
 
   private val vertexShaderHandle = createShader(vertexShaderCode, GL_VERTEX_SHADER)
   private val fragmentShaderHandle = createShader(fragmentShaderCode, GL_FRAGMENT_SHADER)

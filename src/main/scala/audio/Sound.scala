@@ -1,5 +1,6 @@
 package audio
 
+import java.io.BufferedInputStream
 import javax.sound.sampled.{AudioSystem, Clip, FloatControl}
 
 enum Sound(val name: String) {
@@ -26,7 +27,7 @@ enum Sound(val name: String) {
   private def loadAudio(): (Option[Clip], Option[FloatControl]) = {
     try {
       val path = s"/audio/$name.wav"
-      val audioStream = getClass.getResourceAsStream(path)
+      val audioStream = new BufferedInputStream(getClass.getResourceAsStream(path))
       val audio = AudioSystem.getAudioInputStream(audioStream)
       val clip = AudioSystem.getClip()
       clip.open(audio)
