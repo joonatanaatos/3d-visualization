@@ -2,9 +2,10 @@
 
 ## Projektin kääntäminen ja suorittaminen
 
-1. Asenna sbt-projektin riippuvuudet
-2. Luo uusi ajokonfiguraatio tiedostolle `src/main/scala/main.scala`
-   - Projektia on kehitetty Javan versiolla 17
+Tarvittavat työkalut: Java SDK 21, sbt
+
+1. Kloonaa projekti
+2. `sbt run`
 
 ## Kurssin assistentille
 
