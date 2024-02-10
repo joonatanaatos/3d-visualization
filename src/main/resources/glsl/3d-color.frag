@@ -15,7 +15,7 @@ uniform vec3 normal;
 in vec3 viewPos;
 in float cameraDistance;
 in vec2 vTexCoord;
-
+out vec4 fragColor;
 float lightSteepness = 0.6f;
 float distanceSteepness = 10.0f;
 
@@ -58,5 +58,5 @@ void main() {
     }
 
     vec3 finalRGB = distanceFactor() * light;
-    gl_FragColor = vec4(finalRGB, alpha);
+    fragColor = vec4(finalRGB, alpha);
 }

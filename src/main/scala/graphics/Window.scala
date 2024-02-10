@@ -49,6 +49,10 @@ class Window(val title: String, var width: Int, var height: Int) {
 
     // Enable window hints
     glfwDefaultWindowHints()
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3)
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3)
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE)
+
     // Keep the window hidden after creation
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE)
     // Prepare buffer for MSAA
