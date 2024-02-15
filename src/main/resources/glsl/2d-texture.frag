@@ -6,6 +6,7 @@ uniform float opacity;
 
 in vec2 vTexCoord;
 out vec4 fragColor;
+
 void main() {
     vec4 color = texture(textureSampler, vTexCoord);
     float alpha = color.a * opacity;

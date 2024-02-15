@@ -16,6 +16,7 @@ in vec3 viewPos;
 in float cameraDistance;
 in vec2 vTexCoord;
 out vec4 fragColor;
+
 float lightSteepness = 0.4f;
 float distanceSteepness = 10.0f;
 

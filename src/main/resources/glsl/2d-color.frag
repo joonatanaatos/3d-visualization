@@ -6,6 +6,7 @@ uniform float opacity;
 
 in vec2 vTexCoord;
 out vec4 fragColor;
+
 void main() {
     float alpha = color.a * opacity;
     vec3 rgb = color.rgb;
