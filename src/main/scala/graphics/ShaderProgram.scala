@@ -100,14 +100,14 @@ class ShaderProgram(
         glDetachShader(programHandle, fragmentShaderHandle)
       }
     }
-    // Validate program
-    glCheck { glValidateProgram(programHandle) }
-    // Check for errors
-    if glGetProgrami(programHandle, GL_VALIDATE_STATUS) == 0 then {
-      throw new Exception(
-        s"Failed to link shader program:\n${glGetProgramInfoLog(programHandle, 1024)}",
-      )
-    }
+    // Validate program (only for debugging, validateprogram requires a valid context with VBAO bound)
+    //   glCheck { glValidateProgram(programHandle) }
+    //   // Check for errors
+    //  if glGetProgrami(programHandle, GL_VALIDATE_STATUS) == 0 then {
+    //    throw new Exception(
+    //      s"Failed to link shader program:\n${glGetProgramInfoLog(programHandle, 1024)}",
+    //    )
+    //  }
   }
 
   private def findUniformHandles(): immutable.Map[String, Int] = {

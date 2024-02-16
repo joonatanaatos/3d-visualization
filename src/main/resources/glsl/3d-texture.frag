@@ -7,7 +7,7 @@ struct PointLight {
     float brightness;
 };
 
-uniform sampler2D texture;
+uniform sampler2D textureSampler;
 uniform PointLight pointLights[POINT_LIGHTS];
 uniform float ambientLightBrightness;
 uniform vec3 normal;
@@ -15,6 +15,7 @@ uniform vec3 normal;
 in vec3 viewPos;
 in float cameraDistance;
 in vec2 vTexCoord;
+out vec4 fragColor;
 
 float lightSteepness = 0.4f;
 float distanceSteepness = 10.0f;
@@ -48,7 +49,7 @@ vec3 getSpecularLight(vec3 rgb, PointLight pointLight) {
 }
 
 void main() {
-    vec4 color = texture2D(texture, vTexCoord);
+    vec4 color = texture(textureSampler, vTexCoord);
     float alpha = color.a;
     vec3 originalRGB = color.rgb;
 
@@ -59,5 +60,5 @@ void main() {
     }
 
     vec3 finalRGB = distanceFactor() * light;
-    gl_FragColor = vec4(finalRGB, alpha);
+    fragColor = vec4(finalRGB, alpha);
 }
